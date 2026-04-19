@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>消息中心</h2>
+    <div style="margin-bottom: 30px;">
+        <a href="{% url 'send_message' %}" class="btn">发送消息</a>
+    </div>
+    
+    <div style="margin-bottom: 40px;">
+        <h3>收到的消息</h3>
+        {% if received_messages %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                {% for message in received_messages %}
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="margin: 0;">
+                                {% if not message.is_read %}
+                                    <strong>{{ message.subject }}</strong>
+                                {% else %}
+                                    {{ message.subject }}
+                                {% endif %}
+                            </h4>
+                            <span style="font-size: 12px; color: #666;">{{ message.created_at }}</span>
+                        </div>
+                        <p style="margin: 10px 0;">发件人: {{ message.sender.username }}</p>
+                        <p style="margin: 10px 0; color: #666;">{{ message.content|truncatewords:20 }}</p>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <a href="{% url 'message_detail' message.id %}" class="btn">查看详情</a>
+                            <a href="{% url 'delete_message' message.id %}" class="btn btn-secondary">删除</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>暂无收到的消息</p>
+        {% endif %}
+    </div>
+    
+    <div>
+        <h3>发送的消息</h3>
+        {% if sent_messages %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                {% for message in sent_messages %}
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="margin: 0;">{{ message.subject }}</h4>
+                            <span style="font-size: 12px; color: #666;">{{ message.created_at }}</span>
+                        </div>
+                        <p style="margin: 10px 0;">收件人: {{ message.recipient.username }}</p>
+                        <p style="margin: 10px 0; color: #666;">{{ message.content|truncatewords:20 }}</p>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            <a href="{% url 'message_detail' message.id %}" class="btn">查看详情</a>
+                            <a href="{% url 'delete_message' message.id %}" class="btn btn-secondary">删除</a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>暂无发送的消息</p>
+        {% endif %}
+    </div>
+{% endblock %}

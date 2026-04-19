@@ -1,0 +1,999 @@
+{% extends 'base.html' %}
+
+{% block title %}与 {{ friend.username }} 聊天{% endblock %}
+
+{% block content %}
+<!-- 核心容器：好友列表+聊天窗口布局 -->
+<div class="container mt-4 chat-container">
+    <div class="row g-4">
+        <!-- 左侧好友列表区域 -->
+        <div class="col-md-3 chat-sidebar">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="mb-0 text-dark">好友列表</h3>
+                <a href="{% url 'friend_requests' %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-person-plus-fill me-1"></i>好友请求
+                </a>
+            </div>
+            
+            <!-- 好友搜索框（新增优化） -->
+            <div class="mb-4">
+                <input type="text" class="form-control form-control-sm" id="friend-search" 
+                       placeholder="搜索好友..." style="border-radius: 8px;">
+            </div>
+            
+            <!-- 好友列表核心 -->
+            <ul class="list-group chat-friend-list" style="border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                {% if friend_messages %}
+                    {% for item in friend_messages %}
+                        <!-- 单个好友项：激活态区分当前聊天好友 -->
+                        <li class="list-group-item {% if item.friend.id == friend.id %}active bg-primary text-white{% else %}bg-white{% endif %} 
+                                    d-flex justify-content-between align-items-center" 
+                            style="border: none; border-bottom: 1px solid #eee; padding: 12px 16px;">
+                            <a href="{% url 'conversation' item.friend.id %}" 
+                               class="text-decoration-none {% if item.friend.id == friend.id %}text-white{% else %}text-dark{% endif %} 
+                                      flex-grow-1 d-flex align-items-center">
+                                <!-- 好友头像（新增） -->
+                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 36px; height: 36px; flex-shrink: 0;">
+                                    <span class="fw-bold">{{ item.friend.username|first|upper }}</span>
+                                </div>
+                                <!-- 好友名称 -->
+                                <span class="friend-name fw-medium">{{ item.friend.username }}</span>
+                            </a>
+                            <!-- 未读消息数徽章 -->
+                            {% if item.unread_count > 0 %}
+                                <span class="badge bg-danger rounded-pill ms-2">
+                                    {{ item.unread_count }}
+                                </span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <!-- 无好友空状态 -->
+                    <li class="list-group-item bg-white text-center py-5" style="border: none;">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" 
+                             style="width: 80px; height: 80px;">
+                            <i class="bi bi-person-slash text-muted" style="font-size: 32px;"></i>
+                        </div>
+                        <p class="text-muted mb-0">暂无好友</p>
+                        <a href="{% url 'find_friends' %}" class="btn btn-outline-primary btn-sm mt-2">
+                            <i class="bi bi-search me-1"></i>添加好友
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+            
+            <!-- 侧边栏底部功能按钮（新增） -->
+            <div class="mt-4 d-grid gap-2">
+                <button class="btn btn-outline-secondary btn-sm" id="refresh-friends">
+                    <i class="bi bi-arrow-clockwise me-1"></i>刷新列表
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" id="clear-unread">
+                    <i class="bi bi-check2-all me-1"></i>清空未读
+                </button>
+            </div>
+        </div>
+        
+        <!-- 右侧聊天窗口区域 -->
+        <div class="col-md-9 chat-main">
+            <div class="card chat-card" style="border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <!-- 聊天头部：返回+好友名称 -->
+                <div class="card-header chat-header" style="border-bottom: 1px solid #eee; border-radius: 12px 12px 0 0; background-color: #f8f9fa;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <a href="{% url 'message_center' %}" class="btn btn-sm btn-outline-secondary me-3">
+                                <i class="bi bi-arrow-left me-1"></i>返回
+                            </a>
+                            <!-- 好友头像+名称 -->
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 40px; height: 40px;">
+                                    {{ friend.username|first|upper }}
+                                </div>
+                                <h5 class="mb-0 fw-medium">{{ friend.username }}</h5>
+                            </div>
+                        </div>
+                        <!-- 聊天功能按钮（新增） -->
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" id="chat-info">
+                                <i class="bi bi-info-circle"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" id="chat-clear">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 聊天内容区域：核心消息展示 -->
+                <div class="card-body chat-content" style="height: 500px; overflow-y: auto; padding: 20px; background-color: #fafafa;">
+                    <!-- 消息加载中占位（新增） -->
+                    <div id="loading-messages" class="text-center py-5 d-none">
+                        <div class="spinner-border text-primary mb-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted">加载消息中...</p>
+                    </div>
+                    
+                    <!-- 消息列表核心 -->
+                    {% if chat_messages %}
+                        {% for message in chat_messages %}
+                            {% if message.sender == request.user %}
+                                <!-- 自己发送的消息：右对齐 -->
+                                <div class="chat-message sent">
+                                    <!-- 消息气泡 -->
+                                    <div class="message-bubble sent-bubble">
+                                        <!-- 消息文本 -->
+                                        {% if message.content %}
+                                            <p>{{ message.content }}</p>
+                                        {% endif %}
+                                        
+                                        <!-- 消息文件附件 -->
+                                        {% if message.file %}
+                                            <div class="message-attachment">
+                                                <a href="{% url 'download_message_file' message.id %}" 
+                                                   class="text-white text-decoration-none d-flex align-items-center bg-white bg-opacity-20 p-2 rounded-lg w-fit ms-auto">
+                                                    <i class="bi bi-file-earmark me-2"></i>
+                                                    <span class="truncate" style="max-width: 200px;">{{ message.file_name }}</span>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- 消息链接附件 -->
+                                        {% if message.link_url %}
+                                            <div class="message-attachment">
+                                                <a href="{{ message.link_url }}" target="_blank" 
+                                                   class="text-white text-decoration-none d-flex align-items-center bg-white bg-opacity-20 p-2 rounded-lg w-fit ms-auto">
+                                                    <i class="bi bi-link me-2"></i>
+                                                    <span class="truncate" style="max-width: 200px;">{{ message.link_title|default:message.link_url }}</span>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- 消息时间 -->
+                                        <small>
+                                            {{ message.created_at|date:"Y-m-d H:i" }}
+                                            <span class="ms-1"><i class="bi bi-check2-all"></i></span>
+                                        </small>
+                                    </div>
+                                    
+                                    <!-- 自己的头像 -->
+                                    <div class="message-avatar sent-avatar">
+                                        {{ request.user.username|first|upper }}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <!-- 接收的消息：左对齐 -->
+                                <div class="chat-message received">
+                                    <!-- 对方的头像 -->
+                                    <div class="message-avatar received-avatar">
+                                        {{ message.sender.username|first|upper }}
+                                    </div>
+                                    
+                                    <!-- 消息气泡 -->
+                                    <div class="message-bubble received-bubble">
+                                        <!-- 消息文本 -->
+                                        {% if message.content %}
+                                            <p>{{ message.content }}</p>
+                                        {% endif %}
+                                        
+                                        <!-- 消息文件附件 -->
+                                        {% if message.file %}
+                                            <div class="message-attachment">
+                                                <a href="{% url 'download_message_file' message.id %}" 
+                                                   class="text-dark text-decoration-none d-flex align-items-center bg-light p-2 rounded-lg w-fit">
+                                                    <i class="bi bi-file-earmark me-2 text-primary"></i>
+                                                    <span class="truncate" style="max-width: 200px;">{{ message.file_name }}</span>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- 消息链接附件 -->
+                                        {% if message.link_url %}
+                                            <div class="message-attachment">
+                                                <a href="{{ message.link_url }}" target="_blank" 
+                                                   class="text-dark text-decoration-none d-flex align-items-center bg-light p-2 rounded-lg w-fit">
+                                                    <i class="bi bi-link me-2 text-primary"></i>
+                                                    <span class="truncate" style="max-width: 200px;">{{ message.link_title|default:message.link_url }}</span>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- 消息时间 -->
+                                        <small>
+                                            {{ message.created_at|date:"Y-m-d H:i" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <!-- 无消息空状态 -->
+                        <div class="chat-empty-state text-center py-10">
+                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-4" 
+                                 style="width: 100px; height: 100px;">
+                                <i class="bi bi-chat-dots text-muted" style="font-size: 48px;"></i>
+                            </div>
+                            <h5 class="text-muted mb-2">开始与 {{ friend.username }} 聊天吧！</h5>
+                            <p class="text-secondary mb-4">您可以发送文本、文件和链接，畅所欲言～</p>
+                            <button class="btn btn-outline-primary btn-sm" id="send-welcome">
+                                <i class="bi bi-paper-plane me-1"></i>发送第一条消息
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- 聊天输入区域：发送消息表单 -->
+                <div class="card-footer chat-input-area" style="border-top: 1px solid #eee; border-radius: 0 0 12px 12px; background-color: white; padding: 16px 20px;">
+                    <form method="post" enctype="multipart/form-data" id="chat-form" class="chat-form">
+                        {% csrf_token %}
+                        
+                        <!-- 表单错误提示（新增） -->
+                        {% if form.errors %}
+                            <div class="alert alert-danger alert-dismissible fade show mb-3 p-2" style="font-size: 14px;">
+                                <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <span>{{ field.label }}: {{ error }}</span><br>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- 文本输入框（核心） -->
+                        <div class="mb-3">
+                            <textarea name="content" id="id_content" class="form-control chat-input-textarea" 
+                                      rows="2" placeholder="输入消息内容..." style="
+                                          border-radius: 8px;
+                                          border: 1px solid #ced4da;
+                                          resize: none;
+                                          padding: 12px 16px;
+                                          font-size: 14px;
+                                      ">{{ form.content.value|default:'' }}</textarea>
+                        </div>
+                        
+                        <!-- 附件输入区域（文件+链接） -->
+                        <div class="mb-3 row g-2">
+                            <!-- 文件上传 -->
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm">
+                                    <label class="input-group-text" for="id_file">
+                                        <i class="bi bi-paperclip me-1"></i>文件
+                                    </label>
+                                    <input type="file" name="file" id="id_file" class="form-control" style="border-radius: 0 8px 8px 0;">
+                                </div>
+                                <!-- 文件预览（新增） -->
+                                <div id="file-preview" class="mt-2 d-none">
+                                    <div class="alert alert-light d-flex align-items-center p-2">
+                                        <i class="bi bi-file-earmark text-primary me-2"></i>
+                                        <span id="preview-file-name" class="truncate flex-grow-1"></span>
+                                        <button type="button" class="btn-close btn-sm ms-2" id="clear-file"></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 链接输入 -->
+                            <div class="col-md-6">
+                                <div class="input-group input-group-sm">
+                                    <label class="input-group-text" for="id_link_url">
+                                        <i class="bi bi-link me-1"></i>链接
+                                    </label>
+                                    <input type="url" name="link_url" id="id_link_url" class="form-control" 
+                                           placeholder="输入链接地址" value="{{ form.link_url.value|default:'' }}" 
+                                           style="border-radius: 0;">
+                                    <input type="text" name="link_title" id="id_link_title" class="form-control" 
+                                           placeholder="链接标题（可选）" value="{{ form.link_title.value|default:'' }}" 
+                                           style="border-radius: 0 8px 8px 0;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 发送按钮+功能按钮 -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="chat-form-actions">
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="clear-form">
+                                    <i class="bi bi-x-circle me-1"></i>清空
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="draft-save">
+                                    <i class="bi bi-save me-1"></i>保存草稿
+                                </button>
+                            </div>
+                            <button type="submit" class="btn btn-primary chat-send-btn" id="send-message" style="border-radius: 8px;">
+                                <i class="bi bi-paper-plane me-1"></i>发送消息
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 自定义样式：完善布局+交互+响应式 -->
+<style>
+    /* 基础重置 */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    /* 聊天容器整体样式 */
+    .chat-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding-bottom: 20px;
+    }
+    
+    /* 侧边栏样式 */
+    .chat-sidebar {
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .chat-friend-list .list-group-item:last-child {
+        border-bottom: none !important;
+    }
+    
+    .chat-friend-list .list-group-item.active {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    
+    /* 聊天主区域样式 */
+    .chat-main {
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+    
+    .chat-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-content {
+        flex-grow: 1;
+        padding: 20px !important;
+        background-color: #fafafa;
+    }
+    
+    /* 消息容器样式 */
+    .chat-message {
+        margin-bottom: 16px;
+        display: flex;
+        align-items: flex-end;
+    }
+    
+    /* 自己发送的消息 */
+    .chat-message.sent {
+        justify-content: flex-end;
+    }
+    
+    /* 接收的消息 */
+    .chat-message.received {
+        justify-content: flex-start;
+    }
+    
+    /* 消息气泡样式 */
+    .message-bubble {
+        max-width: 70%;
+        padding: 14px 18px;
+        border-radius: 18px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: relative;
+        word-wrap: break-word;
+    }
+    
+    /* 自己的消息气泡 */
+    .message-bubble.sent-bubble {
+        background-color: #1677FF;
+        color: white;
+        border-bottom-right-radius: 4px;
+        margin-right: 10px;
+    }
+    
+    /* 对方的消息气泡 */
+    .message-bubble.received-bubble {
+        background-color: #F2F3F5;
+        color: #333333;
+        border-bottom-left-radius: 4px;
+        margin-left: 10px;
+    }
+    
+    /* 气泡小三角 */
+    .message-bubble.sent-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: -8px;
+        width: 0;
+        height: 0;
+        border-left: 10px solid #1677FF;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+    }
+    
+    .message-bubble.received-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: -8px;
+        width: 0;
+        height: 0;
+        border-right: 10px solid #F2F3F5;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+    }
+    
+    /* 消息文本样式 */
+    .message-bubble p {
+        line-height: 1.5;
+        margin: 0 0 8px 0;
+    }
+    
+    /* 消息时间样式 */
+    .message-bubble small {
+        font-size: 12px;
+        opacity: 0.7;
+    }
+    
+    /* 自己消息时间右对齐 */
+    .message-bubble.sent-bubble small {
+        text-align: right;
+        display: block;
+    }
+    
+    /* 对方消息时间左对齐 */
+    .message-bubble.received-bubble small {
+        text-align: left;
+        display: block;
+    }
+    
+    /* 头像样式 */
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    /* 自己的头像 */
+    .message-avatar.sent-avatar {
+        background-color: #1677FF;
+        color: white;
+    }
+    
+    /* 对方的头像 */
+    .message-avatar.received-avatar {
+        background-color: #E9ECEF;
+        color: #495057;
+    }
+    
+    /* 附件样式 */
+    .message-attachment {
+        margin-bottom: 8px;
+        display: inline-block;
+    }
+    
+    /* 滚动条美化 */
+    .chat-content::-webkit-scrollbar,
+    .chat-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .chat-content::-webkit-scrollbar-track,
+    .chat-sidebar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .chat-content::-webkit-scrollbar-thumb,
+    .chat-sidebar::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 10px;
+    }
+    
+    .chat-content::-webkit-scrollbar-thumb:hover,
+    .chat-sidebar::-webkit-scrollbar-thumb:hover {
+        background: #bbb;
+    }
+    
+    /* 输入框自适应高度 */
+    .chat-input-textarea {
+        max-height: 150px;
+        min-height: 60px;
+    }
+    
+    /* 截断文本样式 */
+    .truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* 响应式适配：移动端优化 */
+    @media (max-width: 768px) {
+        .chat-sidebar {
+            height: auto;
+            margin-bottom: 20px;
+            padding-right: 0;
+        }
+        
+        .chat-main {
+            height: calc(100vh - 200px);
+        }
+        
+        .chat-content {
+            height: 400px !important;
+            padding: 16px !important;
+        }
+        
+        .message-bubble {
+            max-width: 85% !important;
+            padding: 12px 16px;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .chat-form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .chat-header .btn {
+            padding: 4px 8px;
+        }
+        
+        .chat-input-area {
+            padding: 12px !important;
+        }
+        
+        .chat-content {
+            padding: 12px !important;
+        }
+        
+        .message-bubble {
+            max-width: 80% !important;
+        }
+    }
+    
+    /* 消息加载动画 */
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .loading-pulse {
+        animation: pulse 1.5s infinite;
+    }
+    
+    /* 空状态样式 */
+    .chat-empty-state {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    /* 按钮禁用状态 */
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    /* 表单焦点样式 */
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        outline: 0;
+    }
+    
+    /* 消息状态图标 */
+    .bi-check2-all {
+        font-size: 10px;
+    }
+    
+    /* 草稿保存提示 */
+    .draft-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #28a745;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .draft-notification.show {
+        opacity: 1;
+    }
+    
+    /* 聊天信息弹窗（新增） */
+    .modal-content {
+        border-radius: 12px;
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid #eee;
+    }
+    
+    .modal-footer {
+        border-top: 1px solid #eee;
+    }
+</style>
+
+<!-- 交互脚本：完善功能+体验 -->
+<script>
+    // 等待DOM加载完成
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. 自动滚动到最新消息
+        const chatContent = document.querySelector('.chat-content');
+        if (chatContent) {
+            chatContent.scrollTop = chatContent.scrollHeight;
+        }
+        
+        // 2. 输入框高度自适应
+        const textarea = document.getElementById('id_content');
+        if (textarea) {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                const maxHeight = 150;
+                const scrollHeight = this.scrollHeight;
+                this.style.height = (scrollHeight > maxHeight ? maxHeight : scrollHeight) + 'px';
+            });
+            
+            // 初始化高度
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+        }
+        
+        // 3. 文件预览功能
+        const fileInput = document.getElementById('id_file');
+        const filePreview = document.getElementById('file-preview');
+        const previewFileName = document.getElementById('preview-file-name');
+        const clearFileBtn = document.getElementById('clear-file');
+        
+        if (fileInput && filePreview && previewFileName && clearFileBtn) {
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const fileName = this.files[0].name;
+                    previewFileName.textContent = fileName;
+                    filePreview.classList.remove('d-none');
+                } else {
+                    filePreview.classList.add('d-none');
+                }
+            });
+            
+            clearFileBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                filePreview.classList.add('d-none');
+            });
+        }
+        
+        // 4. 表单清空功能
+        const clearFormBtn = document.getElementById('clear-form');
+        const chatForm = document.getElementById('chat-form');
+        
+        if (clearFormBtn && chatForm) {
+            clearFormBtn.addEventListener('click', function() {
+                if (confirm('确定要清空表单内容吗？')) {
+                    chatForm.reset();
+                    // 重置输入框高度
+                    if (textarea) {
+                        textarea.style.height = 'auto';
+                        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+                    }
+                    // 隐藏文件预览
+                    if (filePreview) {
+                        filePreview.classList.add('d-none');
+                    }
+                }
+            });
+        }
+        
+        // 5. 好友搜索功能
+        const friendSearch = document.getElementById('friend-search');
+        const friendItems = document.querySelectorAll('.chat-friend-list .list-group-item');
+        
+        if (friendSearch && friendItems.length > 0) {
+            friendSearch.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase().trim();
+                
+                friendItems.forEach(function(item) {
+                    const friendName = item.querySelector('.friend-name');
+                    if (friendName) {
+                        const nameText = friendName.textContent.toLowerCase();
+                        if (nameText.includes(searchText)) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
+        
+        // 6. 发送按钮禁用/启用逻辑
+        const sendBtn = document.getElementById('send-message');
+        
+        if (sendBtn && textarea) {
+            // 检查输入是否有效
+            function checkInputValid() {
+                const content = textarea.value.trim();
+                const file = fileInput ? fileInput.files.length > 0 : false;
+                const linkUrl = document.getElementById('id_link_url') ? document.getElementById('id_link_url').value.trim() : '';
+                
+                return content !== '' || file || linkUrl !== '';
+            }
+            
+            // 初始化按钮状态
+            sendBtn.disabled = !checkInputValid();
+            
+            // 监听输入变化
+            textarea.addEventListener('input', function() {
+                sendBtn.disabled = !checkInputValid();
+            });
+            
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    sendBtn.disabled = !checkInputValid();
+                });
+            }
+            
+            const linkUrlInput = document.getElementById('id_link_url');
+            if (linkUrlInput) {
+                linkUrlInput.addEventListener('input', function() {
+                    sendBtn.disabled = !checkInputValid();
+                });
+            }
+        }
+        
+        // 7. 保存草稿功能
+        const draftSaveBtn = document.getElementById('draft-save');
+        
+        if (draftSaveBtn && textarea) {
+            draftSaveBtn.addEventListener('click', function() {
+                const content = textarea.value.trim();
+                const linkUrl = document.getElementById('id_link_url') ? document.getElementById('id_link_url').value.trim() : '';
+                const linkTitle = document.getElementById('id_link_title') ? document.getElementById('id_link_title').value.trim() : '';
+                
+                if (content || linkUrl || linkTitle) {
+                    // 存储到localStorage
+                    const draftData = {
+                        content: content,
+                        linkUrl: linkUrl,
+                        linkTitle: linkTitle,
+                        timestamp: new Date().getTime()
+                    };
+                    
+                    localStorage.setItem(`chat_draft_${{ friend.id }}`, JSON.stringify(draftData));
+                    
+                    // 显示提示
+                    showNotification('草稿已保存！', 'success');
+                } else {
+                    showNotification('暂无内容可保存！', 'warning');
+                }
+            });
+            
+            // 加载草稿
+            const savedDraft = localStorage.getItem(`chat_draft_${{ friend.id }}`);
+            if (savedDraft) {
+                try {
+                    const draftData = JSON.parse(savedDraft);
+                    if (draftData.content) {
+                        textarea.value = draftData.content;
+                        // 调整高度
+                        textarea.style.height = 'auto';
+                        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+                    }
+                    if (draftData.linkUrl && document.getElementById('id_link_url')) {
+                        document.getElementById('id_link_url').value = draftData.linkUrl;
+                    }
+                    if (draftData.linkTitle && document.getElementById('id_link_title')) {
+                        document.getElementById('id_link_title').value = draftData.linkTitle;
+                    }
+                } catch (e) {
+                    console.error('加载草稿失败：', e);
+                }
+            }
+        }
+        
+        // 8. 发送第一条消息按钮
+        const sendWelcomeBtn = document.getElementById('send-welcome');
+        
+        if (sendWelcomeBtn && textarea) {
+            sendWelcomeBtn.addEventListener('click', function() {
+                textarea.value = `你好！很高兴认识你 😊`;
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+                textarea.focus();
+                // 启用发送按钮
+                if (sendBtn) {
+                    sendBtn.disabled = false;
+                }
+            });
+        }
+        
+        // 9. 刷新好友列表
+        const refreshFriendsBtn = document.getElementById('refresh-friends');
+        
+        if (refreshFriendsBtn) {
+            refreshFriendsBtn.addEventListener('click', function() {
+                this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>刷新中...';
+                this.disabled = true;
+                
+                // 模拟刷新
+                setTimeout(function() {
+                    window.location.reload();
+                }, 800);
+            });
+        }
+        
+        // 10. 清空未读消息
+        const clearUnreadBtn = document.getElementById('clear-unread');
+        
+        if (clearUnreadBtn) {
+            clearUnreadBtn.addEventListener('click', function() {
+                if (confirm('确定要清空所有未读消息标记吗？')) {
+                    const unreadBadges = document.querySelectorAll('.badge.bg-danger');
+                    unreadBadges.forEach(function(badge) {
+                        badge.remove();
+                    });
+                    showNotification('未读标记已清空！', 'success');
+                }
+            });
+        }
+        
+        // 11. 清空聊天记录
+        const chatClearBtn = document.getElementById('chat-clear');
+        
+        if (chatClearBtn) {
+            chatClearBtn.addEventListener('click', function() {
+                if (confirm('确定要清空聊天记录吗？此操作不可恢复！')) {
+                    // 这里可对接后端接口清空聊天记录
+                    showNotification('聊天记录已清空！', 'success');
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1000);
+                }
+            });
+        }
+        
+        // 12. 聊天信息弹窗（示例）
+        const chatInfoBtn = document.getElementById('chat-info');
+        
+        if (chatInfoBtn) {
+            chatInfoBtn.addEventListener('click', function() {
+                alert(`
+                    聊天信息：
+                    好友名称：{{ friend.username }}
+                    聊天开始时间：{% if chat_messages %}{{ chat_messages.0.created_at|date:"Y-m-d H:i" }}{% else %}暂无记录{% endif %}
+                    消息总数：{% if chat_messages %}{{ chat_messages|length }}{% else %}0{% endif %}
+                `);
+            });
+        }
+        
+        // 13. 表单提交后滚动到底部
+        if (chatForm) {
+            chatForm.addEventListener('submit', function() {
+                // 禁用发送按钮防止重复提交
+                if (sendBtn) {
+                    sendBtn.disabled = true;
+                    sendBtn.innerHTML = '<i class="bi bi-hourglass me-1"></i>发送中...';
+                }
+                
+                // 提交后滚动到底部
+                setTimeout(function() {
+                    if (chatContent) {
+                        chatContent.scrollTop = chatContent.scrollHeight;
+                    }
+                }, 100);
+            });
+        }
+        
+        // 14. 回车键发送消息（Ctrl+Enter换行）
+        if (textarea) {
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.ctrlKey) {
+                    e.preventDefault();
+                    if (sendBtn && !sendBtn.disabled) {
+                        chatForm.submit();
+                    }
+                } else if (e.key === 'Enter' && e.ctrlKey) {
+                    // Ctrl+Enter换行
+                    const cursorPos = this.selectionStart;
+                    const text = this.value;
+                    this.value = text.substring(0, cursorPos) + '\n' + text.substring(cursorPos);
+                    this.selectionStart = this.selectionEnd = cursorPos + 1;
+                    // 调整高度
+                    this.style.height = 'auto';
+                    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+                }
+            });
+        }
+    });
+    
+    // 通用通知函数
+    function showNotification(message, type = 'info') {
+        // 创建通知元素
+        const notification = document.createElement('div');
+        notification.className = `draft-notification ${type === 'success' ? 'bg-success' : type === 'warning' ? 'bg-warning' : 'bg-info'}`;
+        notification.textContent = message;
+        
+        // 添加到页面
+        document.body.appendChild(notification);
+        
+        // 显示通知
+        setTimeout(function() {
+            notification.classList.add('show');
+        }, 100);
+        
+        // 3秒后隐藏
+        setTimeout(function() {
+            notification.classList.remove('show');
+            setTimeout(function() {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+    
+    // 错误处理
+    window.addEventListener('error', function(e) {
+        console.error('脚本错误：', e.message);
+        showNotification('发生错误：' + e.message, 'danger');
+    });
+</script>
+
+<!-- 模态框：聊天信息详情（新增） -->
+<div class="modal fade" id="chatInfoModal" tabindex="-1" aria-labelledby="chatInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chatInfoModalLabel">聊天信息</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <strong>好友：</strong> {{ friend.username }}
+                </div>
+                <div class="mb-2">
+                    <strong>消息总数：</strong> {% if chat_messages %}{{ chat_messages|length }}{% else %}0{% endif %}
+                </div>
+                <div class="mb-2">
+                    <strong>最后消息：</strong> 
+                    {% if chat_messages %}
+                        {{ chat_messages.last.created_at|date:"Y-m-d H:i" }}
+                    {% else %}
+                        暂无
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary btn-sm">保存信息</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

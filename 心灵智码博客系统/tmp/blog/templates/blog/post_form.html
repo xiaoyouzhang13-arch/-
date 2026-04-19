@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block extra_css %}
+    {{ form.media.css }}
+{% endblock %}
+
+{% block content %}
+    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        {% if form.instance.pk %}
+            <a href="{% url 'post_detail' form.instance.slug %}" class="btn btn-secondary mr-3">
+                <i class="bi bi-arrow-left"></i> 返回
+            </a>
+        {% else %}
+            <a href="{% url 'post_list' %}" class="btn btn-secondary mr-3">
+                <i class="bi bi-arrow-left"></i> 返回
+            </a>
+        {% endif %}
+        <h1>{% if form.instance.pk %}编辑博客{% else %}创建博客{% endif %}</h1>
+    </div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div style="margin-bottom: 20px;">
+                <label for="id_title" style="display: block; margin-bottom: 5px; font-weight: 500;">标题</label>
+                {{ form.title }}
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_slug" style="display: block; margin-bottom: 5px; font-weight: 500;">Slug</label>
+                {{ form.slug }}
+                <small style="color: #666;">URL友好的标识符，会自动从标题生成</small>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_content" style="display: block; margin-bottom: 5px; font-weight: 500;">内容</label>
+                {{ form.content }}
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_excerpt" style="display: block; margin-bottom: 5px; font-weight: 500;">摘要</label>
+                {{ form.excerpt }}
+                <small style="color: #666;">文章的简短描述，会显示在文章列表中</small>
+                <div style="margin-top: 10px;">
+                    <button type="button" id="generate-summary-btn" class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #ced4da;">
+                        生成摘要
+                    </button>
+                    <span id="summary-status" style="margin-left: 10px; font-size: 14px;"></span>
+                </div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_category" style="display: block; margin-bottom: 5px; font-weight: 500;">分类</label>
+                {{ form.category }}
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_tags" style="display: block; margin-bottom: 5px; font-weight: 500;">标签</label>
+                {{ form.tags }}
+                <small style="color: #666;">按住Ctrl键可选择多个标签</small>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_featured_image" style="display: block; margin-bottom: 5px; font-weight: 500;">特色图片</label>
+                {{ form.featured_image }}
+                <input type="hidden" id="ai_image_url" name="ai_image_url">
+                <div style="margin-top: 10px;">
+                    <button type="button" id="generate-image-btn" class="btn btn-sm" style="background-color: #f8f9fa; border: 1px solid #ced4da;">
+                        根据摘要生成配图
+                    </button>
+                    <span id="image-status" style="margin-left: 10px; font-size: 14px;"></span>
+                </div>
+                <div id="ai-image-preview-wrapper" style="display: none; margin-top: 12px;">
+                    <small style="display: block; color: #666; margin-bottom: 6px;">AI配图预览（保存文章后将自动设为特色图）</small>
+                    <img id="ai-image-preview" src="" alt="AI生成配图预览" style="max-width: 100%; border-radius: 6px; border: 1px solid #ddd;">
+                </div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_is_published" style="display: block; margin-bottom: 5px; font-weight: 500;">发布状态</label>
+                {{ form.is_published }}
+                <small style="color: #666;">勾选后文章将立即发布</small>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="btn">{% if form.instance.pk %}更新博客{% else %}创建博客{% endif %}</button>
+            </div>
+        </div>
+    </form>
+    {{ form.media.js }}
+    <script>
+        document.getElementById('generate-summary-btn').addEventListener('click', function() {
+            const content = document.getElementById('id_content').value;
+            const statusElement = document.getElementById('summary-status');
+            
+            if (!content) {
+                alert('请先输入文章内容');
+                return;
+            }
+            
+            statusElement.textContent = '生成中...';
+            statusElement.style.color = '#007bff';
+            
+            fetch('{% url "generate_summary" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'content=' + encodeURIComponent(content)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.summary) {
+                    document.getElementById('id_excerpt').value = data.summary;
+                    statusElement.textContent = '摘要生成成功！';
+                    statusElement.style.color = '#28a745';
+                } else {
+                    statusElement.textContent = '生成失败，请重试';
+                    statusElement.style.color = '#dc3545';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                statusElement.textContent = '生成失败，请重试';
+                statusElement.style.color = '#dc3545';
+            });
+        });
+
+        document.getElementById('generate-image-btn').addEventListener('click', function() {
+            const excerpt = document.getElementById('id_excerpt').value;
+            const imageStatusElement = document.getElementById('image-status');
+            const imagePreview = document.getElementById('ai-image-preview');
+            const imagePreviewWrapper = document.getElementById('ai-image-preview-wrapper');
+            const imageUrlInput = document.getElementById('ai_image_url');
+
+            if (!excerpt) {
+                alert('请先生成或填写摘要');
+                return;
+            }
+
+            imageStatusElement.textContent = '图片生成中...';
+            imageStatusElement.style.color = '#007bff';
+
+            fetch('{% url "generate_image" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: 'excerpt=' + encodeURIComponent(excerpt)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.image_url) {
+                    imageUrlInput.value = data.image_url;
+                    imagePreview.src = data.image_url;
+                    imagePreviewWrapper.style.display = 'block';
+                    imageStatusElement.textContent = '配图生成成功，提交后会自动保存。';
+                    imageStatusElement.style.color = '#28a745';
+                } else {
+                    imageStatusElement.textContent = data.error || '生成失败，请重试';
+                    imageStatusElement.style.color = '#dc3545';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                imageStatusElement.textContent = '生成失败，请重试';
+                imageStatusElement.style.color = '#dc3545';
+            });
+        });
+    </script>
+{% endblock %}

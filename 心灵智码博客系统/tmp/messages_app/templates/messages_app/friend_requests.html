@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}好友请求{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <a href="{% url 'message_center' %}" class="btn btn-secondary mr-3">
+            <i class="bi bi-arrow-left"></i> 返回
+        </a>
+        <h1 class="mb-4">好友请求</h1>
+    </div>
+    
+    <!-- 收到的请求 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title">收到的请求</h5>
+        </div>
+        <div class="card-body">
+            {% if received_requests %}
+                <ul class="list-group">
+                    {% for request in received_requests %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ request.sender.username }}</strong>
+                                <p class="text-muted small mb-0">发送于 {{ request.created_at|date:"Y-m-d H:i" }}</p>
+                            </div>
+                            <div>
+                                <a href="{% url 'handle_friend_request' request.id 'accept' %}" class="btn btn-sm btn-success mr-2">接受</a>
+                                <a href="{% url 'handle_friend_request' request.id 'reject' %}" class="btn btn-sm btn-danger">拒绝</a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">暂无收到的好友请求</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 发送的请求 -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">发送的请求</h5>
+        </div>
+        <div class="card-body">
+            {% if sent_requests %}
+                <ul class="list-group">
+                    {% for request in sent_requests %}
+                        <li class="list-group-item">
+                            <div>
+                                <strong>{{ request.receiver.username }}</strong>
+                                <p class="text-muted small mb-0">发送于 {{ request.created_at|date:"Y-m-d H:i" }}</p>
+                                <span class="badge bg-warning">待处理</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">暂无发送的好友请求</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

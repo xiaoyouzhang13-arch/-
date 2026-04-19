@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>标签: {{ tag.name }}</h2>
+    
+    <h3>相关文章</h3>
+    {% if posts %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            {% for post in posts %}
+                <div class="card">
+                    <h4><a href="{% url 'post_detail' post.slug %}">{{ post.title }}</a></h4>
+                    <p>作者: {{ post.author.username }}</p>
+                    <p>发布时间: {{ post.publish_date }}</p>
+                    <p>{{ post.excerpt|default:post.content|truncatewords:30 }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>该标签下暂无文章</p>
+    {% endif %}
+{% endblock %}

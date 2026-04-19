@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'forum_detail' forum.slug %}" style="text-decoration: none;">&larr; 返回 {{ forum.name }}</a>
+    </div>
+
+    <h1>创建新话题</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div style="margin-bottom: 20px;">
+                <label for="id_title" style="display: block; margin-bottom: 5px; font-weight: 500;">标题</label>
+                {{ form.title }}
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_slug" style="display: block; margin-bottom: 5px; font-weight: 500;">Slug</label>
+                {{ form.slug }}
+                <small style="color: #666;">URL友好的标识符，会自动从标题生成</small>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_content" style="display: block; margin-bottom: 5px; font-weight: 500;">内容</label>
+                {{ form.content }}
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="btn">创建话题</button>
+                <a href="{% url 'forum_detail' forum.slug %}" class="btn" style="background-color: #6c757d; margin-left: 10px;">取消</a>
+            </div>
+        </div>
+    </form>
+{% endblock %}

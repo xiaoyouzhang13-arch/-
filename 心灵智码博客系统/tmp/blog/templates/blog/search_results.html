@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>搜索结果</h1>
+    <p>搜索关键词: <strong>{{ query }}</strong></p>
+    
+    {% if posts %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            {% for post in posts %}
+                <div class="card">
+                    {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 5px; margin-bottom: 15px;">
+                    {% else %}
+                        <div style="width: 100%; height: 200px; background-color: #f0f0f0; border-radius: 5px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center;">
+                            <p>无图片</p>
+                        </div>
+                    {% endif %}
+                    <h2><a href="{% url 'post_detail' post.slug %}">{{ post.title }}</a></h2>
+                    <p>作者: {{ post.author.username }}</p>
+                    <p>发布时间: {{ post.publish_date }}</p>
+                    <p>{{ post.excerpt|default:post.content|truncatewords:30 }}</p>
+                    <a href="{% url 'post_detail' post.slug %}" class="btn">阅读更多</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: 40px; text-align: center;">
+            <p>没有找到与 "{{ query }}" 相关的文章</p>
+            <a href="{% url 'post_list' %}" class="btn">返回博客首页</a>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <div>
+            <h1>{{ forum.name }}</h1>
+            <p>{{ forum.description }}</p>
+            <p style="font-size: 12px; color: #999;">创建于: {{ forum.created_at|date:"Y-m-d" }} | 主题数: {{ forum.topics.count }}</p>
+        </div>
+        <div>
+            {% if user.is_authenticated %}
+                <a href="{% url 'create_topic' forum.slug %}" class="btn">创建新话题</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <h2>话题列表</h2>
+    {% if topics %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            {% for topic in topics %}
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3><a href="{% url 'topic_detail' forum.slug topic.slug %}">{{ topic.title }}</a></h3>
+                        {% if topic.is_sticky %}
+                            <span style="background-color: #ffc107; color: #212529; padding: 2px 8px; border-radius: 10px; font-size: 12px;">置顶</span>
+                        {% endif %}
+                    </div>
+                    <p>作者: {{ topic.author.username }}</p>
+                    <p>发布时间: {{ topic.created_at }}</p>
+                    <p>回复数: {{ topic.posts.count }}</p>
+                    <p>浏览量: {{ topic.views }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <p>暂无话题</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'create_topic' forum.slug %}" class="btn">创建第一个话题</a>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if is_paginated %}
+        <div class="pagination" style="margin-top: 30px; text-align: center;">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="btn">上一页</a>
+            {% endif %}
+            <span style="margin: 0 20px;">第 {{ page_obj.number }} 页，共 {{ page_obj.paginator.num_pages }} 页</span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="btn">下一页</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

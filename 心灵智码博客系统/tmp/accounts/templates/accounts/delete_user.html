@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>删除用户</h1>
+    
+    <div class="card" style="max-width: 600px; margin: 0 auto; padding: 30px;">
+        <h3 style="margin-bottom: 20px;">确认删除</h3>
+        <p style="margin-bottom: 30px;">您确定要删除用户 <strong>{{ user.username }}</strong> 吗？此操作无法撤销。</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="submit" class="btn btn-secondary">删除</button>
+                <a href="{% url 'user_list' %}" class="btn">取消</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

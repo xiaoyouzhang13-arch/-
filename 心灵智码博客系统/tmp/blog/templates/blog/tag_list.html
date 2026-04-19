@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h2>博客标签</h2>
+        {% if user.is_authenticated %}
+            <a href="{% url 'create_tag' %}" class="btn">创建标签</a>
+        {% endif %}
+    </div>
+    {% if tags %}
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            {% for tag in tags %}
+                <div class="card" style="flex: 0 0 200px;">
+                    <h3><a href="{% url 'tag_detail' tag.slug %}">{{ tag.name }}</a></h3>
+                    <p>文章数量: {{ tag.posts.count }}</p>
+                    {% if user.is_authenticated %}
+                        <div style="margin-top: 15px;">
+                            <a href="{% url 'update_tag' tag.slug %}" class="btn btn-secondary" style="margin-right: 10px;">编辑</a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: 40px; text-align: center;">
+            <p>暂无标签</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'create_tag' %}" class="btn">创建第一个标签</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心灵智码</title>
+    {% block extra_css %}
+    {% endblock %}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --xhs-red: #ff2442;
+            --xhs-red-deep: #e51f3c;
+            --xhs-bg: #f7f7f8;
+            --xhs-card: #ffffff;
+            --xhs-text: #222;
+            --xhs-subtext: #7a7a85;
+            --xhs-border: #ececf1;
+            --xhs-shadow: 0 8px 24px rgba(27, 27, 33, 0.06);
+        }
+
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.6;
+            font-size: 15px;
+            letter-spacing: 0.1px;
+            color: var(--xhs-text);
+            background: var(--xhs-bg);
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 22px;
+        }
+
+        header {
+            background: var(--xhs-card);
+            border-bottom: 1px solid var(--xhs-border);
+            padding: 14px 0;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: saturate(180%) blur(8px);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--xhs-text);
+        }
+
+        nav {
+            background: transparent;
+            padding: 14px 0 18px;
+            margin-bottom: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #4a4a54;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid var(--xhs-border);
+        }
+
+        .nav-links a:hover {
+            color: var(--xhs-red);
+            border-color: #ffd6dc;
+        }
+
+        main {
+            background-color: transparent;
+            border-radius: 16px;
+            padding: 0;
+            margin-bottom: 56px;
+        }
+
+        h1, h2, h3, h4 {
+            line-height: 1.35;
+            letter-spacing: 0.2px;
+        }
+
+        p {
+            line-height: 1.7;
+        }
+
+        .card {
+            background: var(--xhs-card);
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: var(--xhs-shadow);
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+            border: 1px solid var(--xhs-border);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(27, 27, 33, 0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 18px;
+            background: var(--xhs-red);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(255, 36, 66, 0.28);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            background: var(--xhs-red-deep);
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #5a5a65;
+            border: 1px solid var(--xhs-border);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            color: var(--xhs-red);
+            border-color: #ffd6dc;
+            background: #fff5f7;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        form p {
+            margin-bottom: 20px;
+        }
+        
+        form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #50505b;
+            font-size: 14px;
+        }
+
+        form input,
+        form textarea,
+        form select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--xhs-border);
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background-color: #fff;
+        }
+
+        form input:focus,
+        form textarea:focus,
+        form select:focus {
+            outline: none;
+            border-color: #ff9aaa;
+            box-shadow: 0 0 0 3px rgba(255, 36, 66, 0.14);
+        }
+
+        .messages {
+            margin: 25px 0;
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px solid var(--xhs-border);
+            box-shadow: var(--xhs-shadow);
+        }
+
+        .success {
+            background-color: #f2fff6;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #fff2f4;
+            color: #721c24;
+        }
+
+        .search-form {
+            display: flex;
+            align-items: center;
+            width: 320px;
+            max-width: 100%;
+            background: #fff;
+            border: 1px solid var(--xhs-border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .search-form input {
+            border: none;
+            border-radius: 0;
+            background: #fff;
+        }
+
+        .search-form input:focus {
+            box-shadow: none;
+        }
+
+        .search-form button {
+            border: none;
+            background: var(--xhs-red);
+            color: #fff;
+            padding: 10px 18px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            nav {
+                padding: 12px 0 14px;
+            }
+
+            .container {
+                padding: 0 14px;
+            }
+
+            .search-form {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <img src="https://image.pollinations.ai/prompt/minimal%20red%20app%20logo?width=128&height=128&nologo=true" alt="Logo">
+                <h1>心灵智码</h1>
+            </div>
+        </div>
+    </header>
+    <nav>
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+            <ul class="nav-links">
+                <li><a href="/">首页</a></li>
+                <li><a href="/blog/">博客</a></li>
+                <li><a href="/forum/">论坛</a></li>
+                {% if user.is_authenticated %}
+                    <li><a href="/messages/">消息中心</a></li>
+                    <li><a href="/blog/my-posts/">我的博客</a></li>
+                    <li><a href="/files/">文件管理</a></li>
+                    <li><a href="/accounts/profile/">个人资料</a></li>
+                    <li><a href="/accounts/users/">好友列表</a></li>
+                    {% if user.is_superuser %}
+                        <li><a href="/admin/">管理后台</a></li>
+                    {% endif %}
+                    <li><a href="/accounts/logout/">退出登录</a></li>
+                {% else %}
+                    <li><a href="/accounts/login/">登录</a></li>
+                    <li><a href="/accounts/register/">注册</a></li>
+                {% endif %}
+            </ul>
+            <form action="/blog/search/" method="get" class="search-form">
+                <input type="text" name="q" placeholder="搜索笔记、标题、标签...">
+                <button type="submit">
+                    搜索
+                </button>
+            </form>
+        </div>
+    </nav>
+    <div class="container">
+        <main>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="messages {{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>

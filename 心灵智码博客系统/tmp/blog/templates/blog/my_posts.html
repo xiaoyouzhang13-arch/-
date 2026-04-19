@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h1 style="font-size: 30px;">我的笔记</h1>
+        <a href="{% url 'create_post' %}" class="btn">发布新笔记</a>
+    </div>
+
+    <div style="margin-bottom: 24px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{% url 'post_list' %}" class="btn btn-secondary">推荐</a>
+        <a href="{% url 'my_posts' %}" class="btn btn-secondary">我的</a>
+        <a href="{% url 'category_list' %}" class="btn btn-secondary">分类</a>
+        <a href="{% url 'tag_list' %}" class="btn btn-secondary">标签</a>
+    </div>
+
+    {% if posts %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+            {% for post in posts %}
+                <div class="card" style="transition: all 0.3s ease; border-radius: 16px; padding: 0; overflow: hidden;">
+                    {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" style="width: 100%; height: 190px; object-fit: cover; border-radius: 0;">
+                    {% else %}
+                        <div style="width: 100%; height: 190px; background: linear-gradient(140deg, #ffe7ea 0%, #fff2f4 100%); display: flex; align-items: center; justify-content: center; color: #ff2442;">
+                            <p style="font-size: 16px; font-weight: 600;">图片待补充</p>
+                        </div>
+                    {% endif %}
+                    <div style="padding: 14px;">
+                        {% if post.category %}
+                            <span style="display: inline-block; background-color: #ffe9ed; color: #ff2442; padding: 3px 10px; border-radius: 999px; font-size: 12px; margin-bottom: 10px;">
+                                <a href="{% url 'category_detail' post.category.slug %}" style="color: #ff2442; text-decoration: none;">{{ post.category.name }}</a>
+                            </span>
+                        {% endif %}
+                        <h2 style="margin-bottom: 8px; font-size: 18px;"><a href="{% url 'post_detail' post.slug %}" style="text-decoration: none; color: #222;">{{ post.title|truncatewords:13 }}</a></h2>
+                        <p style="color: #666; font-size: 13px; margin-bottom: 10px;">{{ post.publish_date|date:"Y-m-d" }}</p>
+                        <p style="margin-bottom: 14px; color: #555; font-size: 14px;">{{ post.excerpt|default:post.content|truncatewords:20 }}</p>
+                        {% if post.tags.all %}
+                            <div style="margin-bottom: 12px;">
+                                {% for tag in post.tags.all %}
+                                    <span style="display: inline-block; background-color: #f5f5f7; color: #666; padding: 2px 8px; border-radius: 999px; font-size: 11px; margin-right: 5px; margin-bottom: 5px;">
+                                        <a href="{% url 'tag_detail' tag.slug %}" style="color: #666; text-decoration: none;">{{ tag.name }}</a>
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div style="display: flex; gap: 8px;">
+                            <a href="{% url 'post_detail' post.slug %}" class="btn" style="flex: 1; text-align: center;">查看</a>
+                            <a href="{% url 'update_post' post.slug %}" class="btn btn-secondary" style="flex: 1; text-align: center;">编辑</a>
+                            <a href="{% url 'delete_post' post.slug %}" class="btn btn-secondary" style="flex: 1; text-align: center;">删除</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: 50px; text-align: center;">
+            <h3 style="margin-bottom: 14px;">你还没有发布笔记</h3>
+            <p style="margin-bottom: 24px; color: #666;">马上发布第一篇，打造你的内容主页。</p>
+            <a href="{% url 'create_post' %}" class="btn">发布第一篇</a>
+        </div>
+    {% endif %}
+{% endblock %}

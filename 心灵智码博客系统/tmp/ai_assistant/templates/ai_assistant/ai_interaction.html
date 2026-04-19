@@ -1,0 +1,197 @@
+<div class="ai-interaction">
+    <h3>智能问答助手</h3>
+    <div class="chat-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <div id="chat-messages" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
+            <div class="message ai-message" style="background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                <p>你好！我是社区智能助手，有什么可以帮助你的吗？例如：如何发布博客、论坛规则、内容分类等问题。</p>
+            </div>
+        </div>
+        <div class="chat-input" style="display: flex;">
+            <input type="text" id="chat-query" placeholder="请输入你的问题..." style="flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; margin-right: 10px;">
+            <button id="send-query" class="btn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">发送</button>
+        </div>
+    </div>
+
+    <h3>热门话题</h3>
+    <div class="topics-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px;">
+        <div id="topics-list">
+            {% for topic in topics %}
+            <div class="topic-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                <h4>{{ topic.title }}</h4>
+                <p>{{ topic.content|truncatewords:20 }}</p>
+                <small style="color: #666;">{{ topic.generated_at }}</small>
+            </div>
+            {% empty %}
+            <p>暂无话题，点击下方按钮生成新话题</p>
+            {% endfor %}
+        </div>
+        <button id="generate-topic" class="btn" style="margin-top: 15px; padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">生成新话题</button>
+    </div>
+</div>
+
+<script>
+    // 确保DOM加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM加载完成，初始化AI交互功能');
+        
+        // 聊天功能
+        const sendButton = document.getElementById('send-query');
+        if (sendButton) {
+            console.log('找到发送按钮，绑定点击事件');
+            sendButton.addEventListener('click', function() {
+                console.log('发送按钮被点击');
+                const query = document.getElementById('chat-query').value;
+                if (query) {
+                    console.log('发送查询:', query);
+                    // 添加用户消息
+                    const chatMessages = document.getElementById('chat-messages');
+                    chatMessages.innerHTML += `
+                        <div class="message user-message" style="background-color: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: right;">
+                            <p>${query}</p>
+                        </div>
+                    `;
+                    
+                    // 显示加载状态
+                    chatMessages.innerHTML += `
+                        <div class="message loading-message" id="loading-message" style="background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                            <p>思考中...</p>
+                        </div>
+                    `;
+                    
+                    // 清空输入框
+                    document.getElementById('chat-query').value = '';
+                    
+                    // 滚动到底部
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    // 发送请求
+                    console.log('发送AJAX请求到:', '{% url "ai_chat" %}');
+                    fetch('{% url "ai_chat" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: 'query=' + encodeURIComponent(query)
+                    })
+                    .then(response => {
+                        console.log('收到响应:', response);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('响应数据:', data);
+                        // 移除加载状态
+                        const loadingMessage = document.getElementById('loading-message');
+                        if (loadingMessage) {
+                            loadingMessage.remove();
+                        }
+                        
+                        // 添加AI回复
+                        chatMessages.innerHTML += `
+                            <div class="message ai-message" style="background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                                <p>${data.response}</p>
+                            </div>
+                        `;
+                        
+                        // 滚动到底部
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        const loadingMessage = document.getElementById('loading-message');
+                        if (loadingMessage) {
+                            loadingMessage.remove();
+                        }
+                        chatMessages.innerHTML += `
+                            <div class="message error-message" style="background-color: #ffebee; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                                <p>抱歉，我暂时无法回答这个问题，请稍后再试。</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    console.log('查询为空');
+                }
+            });
+        } else {
+            console.error('未找到发送按钮');
+        }
+        
+        // 生成话题功能
+        const generateButton = document.getElementById('generate-topic');
+        if (generateButton) {
+            console.log('找到生成话题按钮，绑定点击事件');
+            generateButton.addEventListener('click', function() {
+                console.log('生成话题按钮被点击');
+                const button = this;
+                const originalText = button.textContent;
+                button.textContent = '生成中...';
+                button.disabled = true;
+                
+                console.log('发送AJAX请求到:', '{% url "generate_topic" %}');
+                fetch('{% url "generate_topic" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    console.log('收到响应:', response);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('响应数据:', data);
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    
+                    // 添加新话题
+                    const topicsList = document.getElementById('topics-list');
+                    topicsList.innerHTML = `
+                        <div class="topic-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                            <h4>${data.title}</h4>
+                            <p>${data.content.substring(0, 100)}${data.content.length > 100 ? '...' : ''}</p>
+                            <small style="color: #666;">刚刚生成</small>
+                        </div>
+                        ${topicsList.innerHTML}
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    alert('生成话题失败，请稍后再试。');
+                });
+            });
+        } else {
+            console.error('未找到生成话题按钮');
+        }
+        
+        // 页面加载时获取热门话题
+        console.log('获取热门话题');
+        fetch('{% url "get_featured_topics" %}')
+        .then(response => {
+            console.log('收到响应:', response);
+            return response.json();
+        })
+        .then(data => {
+            console.log('响应数据:', data);
+            if (data.topics && data.topics.length > 0) {
+                const topicsList = document.getElementById('topics-list');
+                topicsList.innerHTML = '';
+                data.topics.forEach(topic => {
+                    topicsList.innerHTML += `
+                        <div class="topic-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                            <h4>${topic.title}</h4>
+                            <p>${topic.content.substring(0, 100)}${topic.content.length > 100 ? '...' : ''}</p>
+                            <small style="color: #666;">${topic.generated_at}</small>
+                        </div>
+                    `;
+                });
+            }
+        })
+        .catch(error => {
+            console.error('获取话题失败:', error);
+        });
+    });
+</script>

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}好友列表{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">好友列表</h1>
+    
+    {% if friends %}
+        <div class="row">
+            {% for friend in friends %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ friend.username }}</h5>
+                            <a href="{% url 'conversation' friend.id %}" class="btn btn-primary">发送消息</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">暂无好友</h5>
+                <p class="text-muted">去用户列表添加好友吧！</p>
+                <a href="{% url 'user_list' %}" class="btn btn-primary">查看用户列表</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>消息详情</h2>
+    <div class="card">
+        <div style="margin-bottom: 20px;">
+            <h3>{{ message.subject }}</h3>
+            <p style="color: #666; font-size: 14px;">
+                {% if message.sender == user %}
+                    发送给: {{ message.recipient.username }}
+                {% else %}
+                    来自: {{ message.sender.username }}
+                {% endif %}
+                <span style="margin-left: 20px;">{{ message.created_at }}</span>
+            </p>
+        </div>
+        <div style="margin-bottom: 30px;">
+            <p>{{ message.content }}</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'message_list' %}" class="btn">返回列表</a>
+            <a href="{% url 'delete_message' message.id %}" class="btn btn-secondary">删除消息</a>
+        </div>
+    </div>
+{% endblock %}

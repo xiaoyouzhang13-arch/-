@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'forum_detail' forum.slug %}" style="text-decoration: none;">&larr; 返回 {{ forum.name }}</a>
+    </div>
+
+    <div class="card" style="padding: 20px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+            <h1>{{ topic.title }}</h1>
+            <div>
+                {% if topic.is_sticky %}
+                    <span style="background-color: #ffc107; color: #212529; padding: 4px 12px; border-radius: 15px; font-size: 12px; margin-right: 10px;">置顶</span>
+                {% endif %}
+                {% if topic.is_closed %}
+                    <span style="background-color: #dc3545; color: white; padding: 4px 12px; border-radius: 15px; font-size: 12px;">已关闭</span>
+                {% endif %}
+            </div>
+        </div>
+        <div style="display: flex; gap: 20px; font-size: 14px; color: #666; margin-bottom: 15px;">
+            <span>作者: <strong>{{ topic.author.username }}</strong></span>
+            <span>发布时间: {{ topic.created_at|date:"Y-m-d H:i" }}</span>
+            <span>浏览量: {{ topic.views }}</span>
+            <span>回复数: {{ topic.posts.count }}</span>
+        </div>
+        <div style="border-top: 1px solid #eee; padding-top: 15px;">
+            {{ topic.content|linebreaks }}
+        </div>
+    </div>
+
+    <h2>回复列表 ({{ posts|length }})</h2>
+    {% if posts %}
+        <div style="display: grid; gap: 15px;">
+            {% for post in posts %}
+                <div class="card" style="padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 40px; height: 40px; background-color: #007bff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                {{ post.author.username.0|upper }}
+                            </div>
+                            <div>
+                                <strong>{{ post.author.username }}</strong>
+                                <p style="margin: 0; font-size: 12px; color: #999;">{{ post.created_at|date:"Y-m-d H:i" }}</p>
+                            </div>
+                        </div>
+                        <span style="font-size: 12px; color: #999;">#{{ forloop.counter }}</span>
+                    </div>
+                    <div style="padding-left: 50px;">
+                        {{ post.content|linebreaks }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: 30px; text-align: center;">
+            <p>暂无回复</p>
+        </div>
+    {% endif %}
+
+    {% if not topic.is_closed %}
+        {% if user.is_authenticated %}
+            <div class="card" style="padding: 20px; margin-top: 20px;">
+                <h3>发表评论</h3>
+                <form method="post" action="{% url 'create_post' topic.forum.slug topic.slug %}">
+                    {% csrf_token %}
+                    <div style="margin-bottom: 15px;">
+                        <textarea name="content" rows="5" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: inherit;" placeholder="写下你的回复..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">提交回复</button>
+                </form>
+            </div>
+        {% else %}
+            <div class="card" style="padding: 20px; margin-top: 20px; text-align: center;">
+                <p>登录后即可参与讨论</p>
+                <a href="{% url 'login' %}" class="btn">登录</a>
+                <a href="{% url 'register' %}" class="btn" style="background-color: #28a745; margin-left: 10px;">注册</a>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="card" style="padding: 20px; margin-top: 20px; text-align: center; background-color: #f8d7da;">
+            <p style="color: #721c24;">该话题已关闭，无法添加回复</p>
+        </div>
+    {% endif %}
+{% endblock %}

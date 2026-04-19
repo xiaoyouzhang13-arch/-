@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1>论坛板块</h1>
+        {% if user.is_authenticated %}
+            <a href="{% url 'create_forum' %}" class="btn">创建板块</a>
+        {% endif %}
+    </div>
+    
+    {% if forums %}
+        <div style="display: grid; gap: 20px;">
+            {% for forum in forums %}
+                <div class="card" style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <h2><a href="{% url 'forum_detail' forum.slug %}">{{ forum.name }}</a></h2>
+                            <p>{{ forum.description }}</p>
+                        </div>
+                        <div style="text-align: right; min-width: 150px;">
+                            <div style="display: flex; gap: 20px; justify-content: flex-end;">
+                                <div>
+                                    <span style="font-size: 24px; font-weight: bold;">{{ forum.topics.count }}</span>
+                                    <p style="margin: 0; font-size: 12px; color: #666;">主题</p>
+                                </div>
+                                <div>
+                                    <span style="font-size: 24px; font-weight: bold;">
+                                        {% with 0 as total_posts %}
+                                            {% for topic in forum.topics.all %}
+                                                {% with total_posts|add:topic.posts.count as total_posts %}
+                                                    {% if forloop.last %}
+                                                        {{ total_posts }}
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endfor %}
+                                            {% if forum.topics.count == 0 %}
+                                                0
+                                            {% endif %}
+                                        {% endwith %}
+                                    </span>
+                                    <p style="margin: 0; font-size: 12px; color: #666;">帖子</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="font-size: 12px; color: #999; margin-top: 10px;">创建于: {{ forum.created_at|date:"Y-m-d" }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card" style="padding: 40px; text-align: center;">
+            <p>暂无论坛板块</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'create_forum' %}" class="btn">创建第一个板块</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

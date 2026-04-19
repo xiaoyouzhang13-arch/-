@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>文件详情</h1>
+    
+    <div class="card" style="max-width: 800px; margin: 0 auto; padding: 30px;">
+        <h2 style="margin-bottom: 20px;">{{ file.name }}</h2>
+        
+        {% if file.file_type == 'image' %}
+            <div style="margin-bottom: 30px; text-align: center;">
+                <img src="{{ file.file.url }}" alt="{{ file.name }}" style="max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 5px;">
+            </div>
+        {% endif %}
+        
+        <div style="margin-bottom: 30px;">
+            <h3 style="margin-bottom: 15px;">文件信息</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: 500;">文件类型</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ file.file_type }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: 500;">文件大小</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ file.size|filesizeformat }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: 500;">上传时间</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ file.uploaded_at|date:"Y-m-d H:i:s" }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: 500;">文件路径</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ file.file.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd; font-weight: 500;">文件URL</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #ddd;">
+                        <input type="text" value="{{ file.file.url }}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;" readonly>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        {% if file.description %}
+            <div style="margin-bottom: 30px;">
+                <h3 style="margin-bottom: 10px;">文件描述</h3>
+                <p>{{ file.description }}</p>
+            </div>
+        {% endif %}
+        
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <a href="{% url 'download_file' file.pk %}" class="btn">下载文件</a>
+            <a href="{% url 'file_list' %}" class="btn btn-secondary">返回列表</a>
+            <a href="{% url 'delete_file' file.pk %}" class="btn btn-secondary">删除文件</a>
+        </div>
+    </div>
+{% endblock %}

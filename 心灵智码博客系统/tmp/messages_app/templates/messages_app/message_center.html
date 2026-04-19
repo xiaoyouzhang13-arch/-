@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}消息中心{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>消息中心</h1>
+        {% if unread_count > 0 %}
+            <a href="?mark_read=1" class="btn btn-sm btn-primary">
+                标记所有为已读
+            </a>
+        {% endif %}
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">系统通知</h5>
+            {% if unread_count > 0 %}
+                <span class="badge bg-primary">{{ unread_count }} 条未读</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {% if notifications %}
+                <ul class="list-group">
+                    {% for notification in notifications %}
+                        <li class="list-group-item {% if not notification.is_read %}list-group-item-primary{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ notification.title }}</h6>
+                                    <p class="text-muted small">{{ notification.message }}</p>
+                                    {% if notification.link %}
+                                        <a href="{{ notification.link }}" class="text-primary small">查看详情</a>
+                                    {% endif %}
+                                </div>
+                                <span class="text-muted small">{{ notification.created_at|date:"Y-m-d H:i" }}</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted text-center">暂无系统通知</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

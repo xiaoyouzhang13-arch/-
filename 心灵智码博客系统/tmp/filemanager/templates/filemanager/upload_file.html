@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>上传文件</h1>
+    
+    <form method="post" enctype="multipart/form-data" style="max-width: 600px; margin: 0 auto;">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 20px;">
+            <label for="id_file" style="display: block; margin-bottom: 5px; font-weight: 500;">选择文件</label>
+            {{ form.file }}
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label for="id_name" style="display: block; margin-bottom: 5px; font-weight: 500;">文件名称（可选）</label>
+            {{ form.name }}
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label for="id_description" style="display: block; margin-bottom: 5px; font-weight: 500;">文件描述（可选）</label>
+            {{ form.description }}
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button type="submit" class="btn">上传文件</button>
+            <a href="{% url 'file_list' %}" class="btn btn-secondary" style="margin-left: 10px;">取消</a>
+        </div>
+    </form>
+{% endblock %}

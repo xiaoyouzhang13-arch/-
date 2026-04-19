@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% if form.instance.pk %}编辑分类{% else %}创建分类{% endif %}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div style="max-width: 600px; margin: 0 auto;">
+            <div style="margin-bottom: 20px;">
+                <label for="id_name" style="display: block; margin-bottom: 5px; font-weight: 500;">名称</label>
+                {{ form.name }}
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_slug" style="display: block; margin-bottom: 5px; font-weight: 500;">Slug</label>
+                {{ form.slug }}
+                <small style="color: #666;">URL友好的标识符，会自动从名称生成</small>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label for="id_description" style="display: block; margin-bottom: 5px; font-weight: 500;">描述</label>
+                {{ form.description }}
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="btn">{% if form.instance.pk %}更新分类{% else %}创建分类{% endif %}</button>
+            </div>
+        </div>
+    </form>
+{% endblock %}

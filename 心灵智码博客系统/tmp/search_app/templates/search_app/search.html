@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">向量搜索</h1>
+    
+    <!-- 搜索表单 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="search-form">
+                <div class="form-group">
+                    <label for="search-query">搜索查询</label>
+                    <input type="text" class="form-control" id="search-query" placeholder="输入搜索内容，例如：C++内存管理" required>
+                </div>
+                <div class="form-group mt-2">
+                    <label for="top-k">返回结果数量</label>
+                    <input type="number" class="form-control" id="top-k" value="5" min="1" max="20">
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">搜索</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 搜索结果 -->
+    <div id="search-results" class="mt-4">
+        <!-- 搜索结果将通过JavaScript动态添加 -->
+    </div>
+    
+    <!-- 文档列表 -->
+    <div class="mt-6">
+        <h2>所有文档</h2>
+        <div id="document-list">
+            <!-- 文档列表将通过JavaScript动态添加 -->
+        </div>
+    </div>
+</div>
+
+<script>
+// 搜索表单提交
+document.getElementById('search-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const query = document.getElementById('search-query').value;
+    const topK = document.getElementById('top-k').value;
+    
+    // 显示加载状态
+    document.getElementById('search-results').innerHTML = '<div class="alert alert-info">搜索中...</div>';
+    
+    // 发送搜索请求
+    fetch('/search/search/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ query, top_k: topK })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 200) {
+            // 显示搜索结果
+            let resultsHtml = '<div class="card"><div class="card-body"><h3>搜索结果</h3><ul class="list-group">';
+            
+            if (data.data.results.length === 0) {
+                resultsHtml += '<li class="list-group-item">没有找到相关文档</li>';
+            } else {
+                data.data.results.forEach(result => {
+                    resultsHtml += `
+                        <li class="list-group-item">
+                            <h4>${result.title}</h4>
+                            <p>创建时间: ${new Date(result.created_at).toLocaleString()}</p>
+                            <p>相似度: ${(result.similarity * 100).toFixed(2)}%</p>
+                        </li>
+                    `;
+                });
+            }
+            
+            resultsHtml += '</ul></div></div>';
+            document.getElementById('search-results').innerHTML = resultsHtml;
+        } else {
+            document.getElementById('search-results').innerHTML = `<div class="alert alert-danger">搜索失败: ${data.message}</div>`;
+        }
+    })
+    .catch(error => {
+        document.getElementById('search-results').innerHTML = '<div class="alert alert-danger">搜索失败，请稍后重试</div>';
+        console.error('Error:', error);
+    });
+});
+
+// 加载所有文档
+window.addEventListener('load', function() {
+    // 显示加载状态
+    document.getElementById('document-list').innerHTML = '<div class="alert alert-info">加载文档列表中...</div>';
+    
+    // 发送请求获取所有文档
+    fetch('/search/add-document/', {
+        method: 'GET'
+    })
+    .catch(() => {
+        // 如果GET请求失败，使用POST请求获取文档数量
+        return fetch('/search/sync-documents/');
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 从数据库获取文档列表
+        fetch('/admin/search_app/document/')
+        .then(response => response.text())
+        .then(html => {
+            // 简单处理，显示文档数量
+            document.getElementById('document-list').innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <p>文档总数: ${data.message.match(/+/)[0]}</p>
+                        <p>查看完整文档列表，请访问: <a href="/admin/search_app/document/" target="_blank">管理后台</a></p>
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            document.getElementById('document-list').innerHTML = '<div class="alert alert-danger">加载文档列表失败</div>';
+            console.error('Error:', error);
+        });
+    })
+    .catch(error => {
+        document.getElementById('document-list').innerHTML = '<div class="alert alert-danger">加载文档列表失败</div>';
+        console.error('Error:', error);
+    });
+});
+</script>
+{% endblock %}
