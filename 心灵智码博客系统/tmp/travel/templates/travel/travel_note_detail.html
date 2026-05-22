@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ note.title }} - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+.content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 32px;
+    align-items: start;
+}
+
+.article-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.article-cover {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+}
+
+.article-body {
+    padding: 32px;
+}
+
+.article-body h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.35;
+}
+
+.article-meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.article-content {
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--text-primary);
+}
+
+.article-content h1, .article-content h2, .article-content h3 {
+    margin-top: 28px;
+    margin-bottom: 14px;
+    font-weight: 600;
+}
+
+.article-content pre {
+    background: #1a2332;
+    border-radius: var(--radius);
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    color: #e8eaef;
+}
+
+.article-content code {
+    background: rgba(175,184,193,0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.article-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.article-content img {
+    max-width: 100%;
+    border-radius: var(--radius);
+}
+
+.sidebar {
+    position: sticky;
+    top: 110px;
+}
+
+.sidebar .card {
+    margin-bottom: 16px;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+}
+
+.sidebar .card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 860px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+    .article-body { padding: 20px; }
+    .article-body h1 { font-size: 22px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-grid">
+    <div>
+        <div class="article-card">
+            {% if note.cover_image %}
+            <img src="{{ note.cover_image.url }}" alt="{{ note.title }}" class="article-cover">
+            {% endif %}
+            <div class="article-body">
+                <h1>{{ note.title }}</h1>
+                <div class="article-meta">
+                    <span><i class="fas fa-user"></i> {{ note.user.username }}</span>
+                    <span><i class="far fa-clock"></i> {{ note.created_at|date:"Y-m-d H:i" }}</span>
+                    {% if note.trip_plan %}
+                    <span><i class="fas fa-suitcase"></i> <a href="{% url 'trip_detail' slug=note.trip_plan.slug %}">{{ note.trip_plan.title }}</a></span>
+                    {% endif %}
+                </div>
+                <div class="article-content">
+                    {{ rendered_content|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="card">
+            <h3>关于作者</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">{{ note.user.username }}</p>
+        </div>
+
+        {% if note.trip_plan %}
+        <div class="card">
+            <h3>关联旅行计划</h3>
+            <a href="{% url 'trip_detail' slug=note.trip_plan.slug %}" style="font-size: 13px; color: var(--accent);">
+                <i class="fas fa-suitcase"></i> {{ note.trip_plan.title }}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -63,3 +63,36 @@ class TopicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Topic
         fields = ('id', 'title', 'slug', 'content', 'author', 'forum', 'is_sticky', 'is_closed', 'views', 'created_at')
+
+
+# Travel serializers
+from travel.models import Destination, TripPlan, TravelNote
+
+
+class DestinationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Destination
+        fields = ('id', 'name', 'slug', 'city', 'province', 'category', 'description',
+                  'image', 'latitude', 'longitude', 'rating', 'visit_count',
+                  'best_season', 'recommended_days', 'ticket_price')
+
+
+class TripPlanSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(read_only=True)
+    destination = DestinationSerializer(read_only=True)
+
+    class Meta:
+        model = TripPlan
+        fields = ('id', 'title', 'slug', 'user', 'destination', 'description',
+                  'start_date', 'end_date', 'budget_total', 'preferences',
+                  'status', 'is_public', 'days_count', 'created_at')
+
+
+class TravelNoteSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(read_only=True)
+    trip_plan = TripPlanSerializer(read_only=True)
+
+    class Meta:
+        model = TravelNote
+        fields = ('id', 'title', 'slug', 'content', 'user', 'trip_plan',
+                  'cover_image', 'is_published', 'created_at')

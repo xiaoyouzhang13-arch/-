@@ -3,328 +3,565 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>心灵智码</title>
-    {% block extra_css %}
-    {% endblock %}
+    <meta name="description" content="心灵智码 - 旅行与代码的杂志式博客平台">
+    <title>{% block title %}心灵智码{% endblock %}</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ===== 设计变量 ===== */
+        :root {
+            --text-primary: #1a2332;
+            --text-secondary: #5a6b7d;
+            --accent: #c44d34;
+            --accent-warm: #e8b44d;
+            --bg-page: #f7f8fa;
+            --bg-white: #ffffff;
+            --border: #e2e5ea;
+            --radius: 4px;
+            --max-width: 1100px;
         }
 
-        :root {
-            --xhs-red: #ff2442;
-            --xhs-red-deep: #e51f3c;
-            --xhs-bg: #f7f7f8;
-            --xhs-card: #ffffff;
-            --xhs-text: #222;
-            --xhs-subtext: #7a7a85;
-            --xhs-border: #ececf1;
-            --xhs-shadow: 0 8px 24px rgba(27, 27, 33, 0.06);
-        }
+        /* ===== 基础排版 ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
-            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
             font-size: 15px;
-            letter-spacing: 0.1px;
-            color: var(--xhs-text);
-            background: var(--xhs-bg);
+            line-height: 1.7;
+            color: var(--text-primary);
+            background-color: var(--bg-page);
+            -webkit-font-smoothing: antialiased;
         }
 
-        .container {
-            max-width: 1240px;
-            margin: 0 auto;
-            padding: 0 22px;
-        }
+        h1, h2, h3, h4 { font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", serif; font-weight: 700; }
 
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .container { max-width: var(--max-width); margin: 0 auto; padding: 0 20px; }
+
+        /* ===== 头部 ===== */
         header {
-            background: var(--xhs-card);
-            border-bottom: 1px solid var(--xhs-border);
-            padding: 14px 0;
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
-            z-index: 20;
-            backdrop-filter: saturate(180%) blur(8px);
+            z-index: 100;
         }
 
         .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 14px 0;
         }
 
         .logo {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            align-items: baseline;
+            gap: 6px;
+            text-decoration: none;
+            color: var(--text-primary);
         }
-
-        .logo img {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-        }
+        .logo:hover { text-decoration: none; }
 
         .logo h1 {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
-            color: var(--xhs-text);
+            letter-spacing: 1px;
         }
 
+        .logo .tagline {
+            font-size: 11px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .mobile-menu-btn span {
+            width: 22px; height: 2px;
+            background: var(--text-primary);
+            border-radius: 1px;
+            transition: all 0.2s ease;
+        }
+        .mobile-menu-btn.active span:nth-child(1) { transform: rotate(45deg) translateY(6px); }
+        .mobile-menu-btn.active span:nth-child(2) { opacity: 0; }
+        .mobile-menu-btn.active span:nth-child(3) { transform: rotate(-45deg) translateY(-6px); }
+
+        /* ===== 主导航 ===== */
         nav {
-            background: transparent;
-            padding: 14px 0 18px;
-            margin-bottom: 20px;
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
         }
 
         .nav-links {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
             list-style: none;
             align-items: center;
         }
 
-        .nav-links a {
-            color: #4a4a54;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            padding: 8px 14px;
-            border-radius: 999px;
-            background: #fff;
-            border: 1px solid var(--xhs-border);
+        /* 导航分组 */
+        .nav-group {
+            position: relative;
         }
 
-        .nav-links a:hover {
-            color: var(--xhs-red);
-            border-color: #ffd6dc;
-        }
-
-        main {
-            background-color: transparent;
-            border-radius: 16px;
-            padding: 0;
-            margin-bottom: 56px;
-        }
-
-        h1, h2, h3, h4 {
-            line-height: 1.35;
-            letter-spacing: 0.2px;
-        }
-
-        p {
-            line-height: 1.7;
-        }
-
-        .card {
-            background: var(--xhs-card);
-            border-radius: 14px;
-            padding: 22px;
-            box-shadow: var(--xhs-shadow);
-            margin-bottom: 25px;
-            transition: all 0.3s ease;
-            border: 1px solid var(--xhs-border);
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(27, 27, 33, 0.1);
-        }
-
-        .btn {
-            display: inline-block;
+        .nav-group > a {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             padding: 10px 18px;
-            background: var(--xhs-red);
-            color: white;
-            border: none;
-            border-radius: 999px;
-            cursor: pointer;
             font-size: 14px;
             font-weight: 600;
-            transition: all 0.3s ease;
+            color: var(--text-secondary);
             text-decoration: none;
-            box-shadow: 0 4px 14px rgba(255, 36, 66, 0.28);
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s ease, border-color 0.15s ease;
         }
+        .nav-group > a:hover { color: var(--text-primary); text-decoration: none; }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            background: var(--xhs-red-deep);
-        }
+        .nav-group > a .arrow { font-size: 9px; opacity: 0.5; }
 
-        .btn-secondary {
-            background: #fff;
-            color: #5a5a65;
-            border: 1px solid var(--xhs-border);
-            box-shadow: none;
-        }
+        /* 社区主入口 */
+        .nav-group.community > a:hover,
+        .nav-group.community > a.active { color: var(--text-primary); border-bottom-color: var(--text-primary); }
 
-        .btn-secondary:hover {
-            color: var(--xhs-red);
-            border-color: #ffd6dc;
-            background: #fff5f7;
-        }
+        /* 旅游主入口 */
+        .nav-group.travel > a:hover,
+        .nav-group.travel > a.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        form {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        form p {
-            margin-bottom: 20px;
-        }
-        
-        form label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #50505b;
+        /* 首页链接 */
+        .nav-home {
+            display: inline-flex;
+            padding: 10px 18px;
             font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: color 0.15s ease, border-color 0.15s ease;
+        }
+        .nav-home:hover { color: var(--text-primary); text-decoration: none; }
+        .nav-home.active { color: var(--text-primary); border-bottom-color: var(--text-primary); }
+
+        /* 下拉菜单 */
+        .nav-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 150px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            padding: 6px 0;
+            z-index: 200;
         }
 
-        form input,
-        form textarea,
-        form select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--xhs-border);
-            border-radius: 12px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            background-color: #fff;
+        .nav-group:hover .nav-dropdown { display: block; }
+
+        .nav-dropdown a {
+            display: block;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: color 0.1s ease, background-color 0.1s ease;
+        }
+        .nav-dropdown a:hover {
+            color: var(--text-primary);
+            background: #f5f6f8;
+            text-decoration: none;
         }
 
-        form input:focus,
-        form textarea:focus,
-        form select:focus {
-            outline: none;
-            border-color: #ff9aaa;
-            box-shadow: 0 0 0 3px rgba(255, 36, 66, 0.14);
+        /* 右侧用户区 */
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
         }
-
-        .messages {
-            margin: 25px 0;
-            padding: 18px;
-            border-radius: 12px;
-            border: 1px solid var(--xhs-border);
-            box-shadow: var(--xhs-shadow);
+        .nav-user a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 6px 12px;
         }
+        .nav-user a:hover { color: var(--accent); }
+        .nav-user .btn { font-size: 12px; padding: 5px 14px; }
 
-        .success {
-            background-color: #f2fff6;
-            color: #155724;
-        }
-
-        .error {
-            background-color: #fff2f4;
-            color: #721c24;
-        }
-
+        /* 搜索框 */
         .search-form {
             display: flex;
             align-items: center;
-            width: 320px;
-            max-width: 100%;
-            background: #fff;
-            border: 1px solid var(--xhs-border);
-            border-radius: 999px;
+            width: 200px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             overflow: hidden;
         }
+        .search-form:focus-within { border-color: var(--text-secondary); }
 
         .search-form input {
+            flex: 1;
+            padding: 6px 10px;
             border: none;
-            border-radius: 0;
-            background: #fff;
+            background: transparent;
+            font-size: 12px;
+            color: var(--text-primary);
+            width: 100%;
         }
-
-        .search-form input:focus {
-            box-shadow: none;
-        }
+        .search-form input:focus { outline: none; }
+        .search-form input::placeholder { color: #aab3bf; }
 
         .search-form button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px; height: 30px;
             border: none;
-            background: var(--xhs-red);
-            color: #fff;
-            padding: 10px 18px;
+            background: var(--text-primary);
+            color: white;
             cursor: pointer;
+            font-size: 12px;
+        }
+        .search-form button:hover { background: #2c3e50; }
+
+        /* ===== 主内容 ===== */
+        main { padding: 40px 0; }
+
+        /* ===== 按钮 ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .btn:hover { text-decoration: none; }
+
+        .btn-primary { background: var(--text-primary); color: white; }
+        .btn-primary:hover { background: #2c3e50; }
+
+        .btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-outline:hover { border-color: var(--text-primary); }
+
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-accent:hover { background: #a83d2b; }
+
+        .btn-sm { padding: 5px 12px; font-size: 12px; }
+        .btn-lg { padding: 12px 28px; font-size: 15px; }
+
+        /* ===== 卡片 ===== */
+        .card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
         }
 
-        @media (max-width: 768px) {
-            .header-content {
+        /* ===== 表单 ===== */
+        form p { margin-bottom: 20px; }
+
+        form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        form input, form textarea, form select {
+            width: 100%;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text-primary);
+            background: var(--bg-white);
+            transition: border-color 0.15s ease;
+        }
+        form input:focus, form textarea:focus, form select:focus {
+            outline: none;
+            border-color: var(--text-primary);
+        }
+        form textarea { min-height: 140px; resize: vertical; }
+
+        /* ===== 消息提示 ===== */
+        .messages {
+            margin: 20px 0;
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            border: 1px solid;
+            font-size: 14px;
+        }
+        .success { background: #e6f0e8; border-color: #c3dcc6; color: #2d5a35; }
+        .error { background: #fce8e6; border-color: #f5c6c0; color: #7d2a24; }
+        .info { background: #e3edf3; border-color: #c0d6e4; color: #1a445e; }
+
+        /* ===== 页脚 ===== */
+        footer {
+            background: var(--bg-white);
+            border-top: 1px solid var(--border);
+            padding: 40px 0 24px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 32px;
+        }
+
+        .footer-section { flex: 1; min-width: 160px; }
+        .footer-section h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: var(--text-primary);
+        }
+        .footer-section ul { list-style: none; }
+        .footer-section li { margin-bottom: 8px; }
+        .footer-section a { color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+        .footer-section a:hover { color: var(--accent); }
+
+        .footer-bottom {
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: #aab3bf;
+            font-size: 12px;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 900px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: calc(100% + 1px);
+                left: 0; right: 0;
+                background: var(--bg-white);
+                padding: 8px;
+                border-bottom: 1px solid var(--border);
                 flex-direction: column;
                 align-items: stretch;
-                gap: 10px;
             }
+            .nav-links.active { display: flex; }
 
-            nav {
-                padding: 12px 0 14px;
-            }
+            .nav-group { position: static; }
+            .nav-group > a { width: 100%; }
 
-            .container {
-                padding: 0 14px;
+            .nav-dropdown {
+                display: none !important;
+                position: static;
+                box-shadow: none;
+                border: none;
+                padding: 0 0 0 16px;
             }
+            .nav-group.open .nav-dropdown { display: block !important; }
 
-            .search-form {
-                width: 100%;
-            }
+            .mobile-menu-btn { display: flex; }
+
+            .search-form { order: -1; width: 100%; margin-bottom: 8px; }
+            .nav-wrapper { flex-wrap: wrap; }
+
+            .nav-user { width: 100%; justify-content: flex-end; }
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 0 14px; }
+            main { padding: 24px 0; }
+            .logo h1 { font-size: 18px; }
+            .card { padding: 16px; }
         }
     </style>
+
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <header>
         <div class="container header-content">
-            <div class="logo">
-                <img src="https://image.pollinations.ai/prompt/minimal%20red%20app%20logo?width=128&height=128&nologo=true" alt="Logo">
+            <a href="/" class="logo">
                 <h1>心灵智码</h1>
-            </div>
+                <span class="tagline">Travel · Code · Life</span>
+            </a>
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="切换菜单">
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </header>
+
     <nav>
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <ul class="nav-links">
-                <li><a href="/">首页</a></li>
-                <li><a href="/blog/">博客</a></li>
-                <li><a href="/forum/">论坛</a></li>
-                {% if user.is_authenticated %}
-                    <li><a href="/messages/">消息中心</a></li>
-                    <li><a href="/blog/my-posts/">我的博客</a></li>
-                    <li><a href="/files/">文件管理</a></li>
-                    <li><a href="/accounts/profile/">个人资料</a></li>
-                    <li><a href="/accounts/users/">好友列表</a></li>
-                    {% if user.is_superuser %}
-                        <li><a href="/admin/">管理后台</a></li>
-                    {% endif %}
-                    <li><a href="/accounts/logout/">退出登录</a></li>
-                {% else %}
-                    <li><a href="/accounts/login/">登录</a></li>
-                    <li><a href="/accounts/register/">注册</a></li>
-                {% endif %}
+        <div class="container nav-wrapper">
+            <ul class="nav-links" id="nav-links">
+                <li><a href="/" class="nav-home active">首页</a></li>
+                <li class="nav-group community">
+                    <a href="/blog/" class="active">
+                        社区 <span class="arrow">&#9662;</span>
+                    </a>
+                    <div class="nav-dropdown">
+                        <a href="/blog/">博客</a>
+                        <a href="/forum/">论坛</a>
+                        {% if user.is_authenticated %}
+                            <a href="/messages/">消息</a>
+                            <a href="/files/">文件管理</a>
+                            <a href="/accounts/users/">好友</a>
+                        {% endif %}
+                    </div>
+                </li>
+                <li class="nav-group travel">
+                    <a href="/travel/destinations/">
+                        旅游 <span class="arrow">&#9662;</span>
+                    </a>
+                    <div class="nav-dropdown">
+                        <a href="/travel/destinations/">景点浏览</a>
+                        <a href="/travel/trips/">行程规划</a>
+                        <a href="/travel/chat/">AI 对话规划</a>
+                        <a href="/travel/trips/templates/">行程模板</a>
+                        <a href="/travel/notes/">旅行笔记</a>
+                    </div>
+                </li>
             </ul>
-            <form action="/blog/search/" method="get" class="search-form">
-                <input type="text" name="q" placeholder="搜索笔记、标题、标签...">
-                <button type="submit">
-                    搜索
-                </button>
+
+            <form action="/blog/search/" method="get" class="search-form" role="search">
+                <input type="text" name="q" placeholder="搜索..." aria-label="搜索">
+                <button type="submit" aria-label="搜索"><i class="fas fa-search"></i></button>
             </form>
+
+            <div class="nav-user">
+                {% if user.is_authenticated %}
+                    <a href="/blog/my-posts/">我的博客</a>
+                    <a href="/accounts/profile/">{{ user.username }}</a>
+                    {% if user.is_superuser %}
+                        <a href="/admin/">管理</a>
+                    {% endif %}
+                    <a href="/accounts/logout/">退出</a>
+                {% else %}
+                    <a href="/accounts/login/">登录</a>
+                    <a href="/accounts/register/" class="btn btn-primary btn-sm">注册</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
+
     <div class="container">
         <main>
             {% if messages %}
                 {% for message in messages %}
-                    <div class="messages {{ message.tags }}">
-                        {{ message }}
-                    </div>
+                    <div class="messages {{ message.tags }}" role="alert">{{ message }}</div>
                 {% endfor %}
             {% endif %}
-            {% block content %}
-            {% endblock %}
+            {% block content %}{% endblock %}
         </main>
     </div>
-    {% block extra_js %}
-    {% endblock %}
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>关于我们</h4>
+                    <ul>
+                        <li><a href="#">项目介绍</a></li>
+                        <li><a href="#">团队成员</a></li>
+                        <li><a href="#">联系我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>社区</h4>
+                    <ul>
+                        <li><a href="/blog/">博客</a></li>
+                        <li><a href="/forum/">论坛</a></li>
+                        <li><a href="/files/">文件管理</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>旅游</h4>
+                    <ul>
+                        <li><a href="/travel/destinations/">景点浏览</a></li>
+                        <li><a href="/travel/trips/">行程规划</a></li>
+                        <li><a href="/travel/notes/">旅行笔记</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 心灵智码. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 滚动阴影
+        const header = document.querySelector('header');
+        window.addEventListener('scroll', () => {
+            header.style.boxShadow = window.scrollY > 10 ? '0 1px 4px rgba(0,0,0,0.06)' : 'none';
+        });
+
+        // 导航高亮
+        const currentPath = window.location.pathname;
+        const allNavLinks = document.querySelectorAll('.nav-links a, .nav-home, .nav-group > a');
+
+        // 高亮旅游导航
+        if (currentPath.startsWith('/travel/')) {
+            document.querySelector('.nav-group.community > a').classList.remove('active');
+            document.querySelector('.nav-home').classList.remove('active');
+            document.querySelector('.nav-group.travel > a').classList.add('active');
+        }
+        // 高亮社区导航
+        if (currentPath.startsWith('/blog/') || currentPath.startsWith('/forum/') || currentPath.startsWith('/files/') || currentPath.startsWith('/messages/') || currentPath.startsWith('/accounts/')) {
+            document.querySelector('.nav-home').classList.remove('active');
+            document.querySelector('.nav-group.community > a').classList.add('active');
+        }
+        // 首页
+        if (currentPath === '/') {
+            document.querySelector('.nav-home').classList.add('active');
+        }
+
+        // 移动端菜单
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const navLinks = document.getElementById('nav-links');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenuBtn.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+
+        // 移动端下拉——点击展开而非hover
+        document.querySelectorAll('.nav-group > a').forEach(groupLink => {
+            groupLink.addEventListener('click', function(e) {
+                if (window.innerWidth <= 900) {
+                    e.preventDefault();
+                    this.parentElement.classList.toggle('open');
+                }
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

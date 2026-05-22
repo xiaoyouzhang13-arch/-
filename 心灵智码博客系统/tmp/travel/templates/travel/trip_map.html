@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}旅行地图 - {{ trip.title }} - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.page-title { font-size: 24px; font-weight: 700; }
+
+.map-wrapper {
+    position: relative;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.map-loading {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #e8eaef;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    color: var(--text-secondary);
+    font-size: 13px;
+    transition: opacity 0.4s ease;
+}
+.map-loading.done { opacity: 0; pointer-events: none; }
+
+.map-loading .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid #ddd;
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#map { width: 100%; height: 500px; background: #e8eaef; }
+
+.leaflet-tile { will-change: transform; }
+.leaflet-tile-loaded { opacity: 1 !important; }
+
+.marker-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    margin-top: 24px;
+}
+.marker-item {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+.marker-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%; flex-shrink: 0;
+}
+.empty-map { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+.section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+@media (max-width: 768px) {
+    #map { height: 350px; }
+    .marker-list { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">旅行地图：{{ trip.title }}</h1>
+    <a href="{% url 'trip_detail' slug=trip.slug %}" class="btn btn-outline btn-sm">
+        <i class="fas fa-arrow-left"></i> 返回行程
+    </a>
+</div>
+
+{% if markers != '[]' %}
+<div class="map-wrapper">
+    <div class="map-loading" id="map-loading">
+        <div class="spinner"></div>
+        地图加载中...
+    </div>
+    <div id="map"></div>
+</div>
+
+<h2 class="section-title">标记点列表</h2>
+<div class="marker-list" id="marker-list"></div>
+{% else %}
+<div class="map-wrapper">
+    <div class="empty-map">
+        <i class="fas fa-map-marked-alt" style="font-size: 64px; color: #aab3bf; margin-bottom: 16px; display: block;"></i>
+        <h3 style="color: var(--text-primary);">暂无地图数据</h3>
+        <p>行程中的活动需要关联到有坐标信息的景点才能在地图上显示。</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if markers != '[]' %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+    var markers = {{ markers|safe }};
+    var colors = ['#c44d34', '#2c6e91', '#2d5a35', '#e8b44d', '#5a6b7d', '#1a2332', '#7d2a24'];
+
+    var map = L.map('map').setView([markers[0].lat, markers[0].lng], 13);
+
+    // Multi-provider tiles — China-first, auto-fallback on error
+    var tileProviders = [
+        {
+            // 高德地图 — Alibaba Cloud, instant in China
+            url: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+            attr: '&copy; 高德',
+            subdomains: '1234',
+            maxZoom: 18
+        },
+        {
+            // CartoDB — global CDN
+            url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+            attr: '&copy; <a href="https://carto.com">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 19
+        },
+        {
+            // OSM — last resort
+            url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            attr: '&copy; <a href="https://openstreetmap.org">OSM</a>',
+            maxZoom: 18
+        }
+    ];
+
+    var currentProvider = 0;
+    var tileErrors = 0;
+
+    function addTileLayer(index) {
+        if (index >= tileProviders.length) {
+            document.getElementById('map-loading').innerHTML = '<div style="text-align:center;color:var(--accent);">地图瓦片加载失败<br><small>请检查网络连接</small></div>';
+            return;
+        }
+        var p = tileProviders[index];
+        var opts = {
+            attribution: p.attr,
+            maxZoom: p.maxZoom || 18,
+            crossOrigin: true,
+            errorTileUrl: ''
+        };
+        if (p.subdomains) opts.subdomains = p.subdomains;
+        var layer = L.tileLayer(p.url, opts).addTo(map);
+
+        var errorTimeout;
+        layer.on('tileerror', function(e) {
+            tileErrors++;
+            if (tileErrors > 5 && currentProvider < tileProviders.length - 1) {
+                clearTimeout(errorTimeout);
+                errorTimeout = setTimeout(function() {
+                    console.log('Switching tile provider...');
+                    map.removeLayer(layer);
+                    currentProvider++;
+                    tileErrors = 0;
+                    addTileLayer(currentProvider);
+                }, 1000);
+            }
+        });
+
+        layer.on('load', function() {
+            document.getElementById('map-loading').classList.add('done');
+        });
+    }
+
+    addTileLayer(0);
+
+    // Also show loading done after timeout as fallback
+    setTimeout(function() {
+        document.getElementById('map-loading').classList.add('done');
+    }, 5000);
+
+    var points = [], bounds = [];
+
+    markers.forEach(function(m, i) {
+        var color = colors[m.day % colors.length];
+        var latlng = [m.lat, m.lng];
+        points.push(latlng);
+        bounds.push(latlng);
+
+        var icon = L.divIcon({
+            className: 'custom-marker',
+            html: '<div style="background:' + color + ';color:white;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-size:12px;font-weight:700;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3);">' + m.day + '</div>',
+            iconSize: [24, 24], iconAnchor: [12, 12], popupAnchor: [0, -12]
+        });
+
+        L.marker(latlng, {icon: icon}).addTo(map)
+            .bindPopup('<strong>' + m.title + '</strong>' + m.dest_name + '<br><small>' + m.time + ' | ' + m.transport + '</small>');
+    });
+
+    if (points.length > 1) {
+        L.polyline(points, {
+            color: '#c44d34', weight: 3, opacity: 0.6, dashArray: '8, 6'
+        }).addTo(map);
+    }
+
+    map.fitBounds(bounds, {padding: [30, 30]});
+
+    // Render marker list
+    var listHtml = '';
+    markers.forEach(function(m, i) {
+        var color = colors[m.day % colors.length];
+        listHtml += '<div class="marker-item">' +
+            '<div class="marker-dot" style="background:' + color + ';"></div>' +
+            '<div><strong>第' + m.day + '天</strong> ' + m.title + ' (' + m.dest_name + ')</div>' +
+            '<div style="flex:1;text-align:right;font-size:12px;color:#5a6b7d;">' + m.time + '</div>' +
+            '</div>';
+    });
+    document.getElementById('marker-list').innerHTML = listHtml;
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}旅游景点 - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.filter-bar .tab {
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius);
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+.filter-bar .tab:hover { color: var(--accent); background: none; }
+.filter-bar .tab.active {
+    background: var(--accent);
+    color: white;
+}
+
+.destinations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.destination-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+}
+.destination-card:hover { border-color: var(--accent); }
+
+.destination-image {
+    height: 180px;
+    background: #e8eaef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b0b9c2;
+    font-size: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.destination-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.category-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--accent);
+    color: white;
+    padding: 3px 10px;
+    border-radius: var(--radius);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.destination-body {
+    padding: 16px;
+}
+
+.destination-body h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+
+.destination-location {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.destination-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.destination-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.destination-meta .rating { color: var(--accent-warm); font-weight: 600; }
+
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: var(--bg-white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+.empty-state h3 { font-size: 18px; color: var(--text-primary); margin-bottom: 8px; }
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 40px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .destinations-grid { grid-template-columns: 1fr; }
+    .destination-image { height: 200px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">旅游景点</h1>
+    <form method="get" class="search-form" style="max-width: 280px;">
+        <input type="text" name="q" placeholder="搜索景点、城市..." value="{{ search_query }}">
+        <button type="submit"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+
+<div class="filter-bar">
+    <a href="?" class="tab {% if not active_category %}active{% endif %}">全部</a>
+    <a href="?category=nature" class="tab {% if active_category == 'nature' %}active{% endif %}">自然风光</a>
+    <a href="?category=culture" class="tab {% if active_category == 'culture' %}active{% endif %}">人文历史</a>
+    <a href="?category=food" class="tab {% if active_category == 'food' %}active{% endif %}">美食购物</a>
+    <a href="?category=leisure" class="tab {% if active_category == 'leisure' %}active{% endif %}">休闲娱乐</a>
+    <a href="?category=outdoor" class="tab {% if active_category == 'outdoor' %}active{% endif %}">户外探险</a>
+</div>
+
+{% if destinations %}
+<div class="destinations-grid">
+    {% for dest in destinations %}
+    <a href="{% url 'destination_detail' slug=dest.slug %}" class="destination-card">
+        <div class="destination-image">
+            {% if dest.image %}
+            <img src="{{ dest.image.url }}" alt="{{ dest.name }}" loading="lazy">
+            {% else %}
+            <i class="fas fa-map-marker-alt"></i>
+            {% endif %}
+            <span class="category-badge">{{ dest.get_category_display }}</span>
+        </div>
+        <div class="destination-body">
+            <h3>{{ dest.name }}</h3>
+            <div class="destination-location">
+                <i class="fas fa-location-dot"></i> {{ dest.city }}，{{ dest.province }}
+            </div>
+            <p class="destination-desc">{{ dest.description|truncatewords:25 }}</p>
+            <div class="destination-meta">
+                <span class="rating"><i class="fas fa-star"></i> {{ dest.rating|floatformat:1 }}</span>
+                <span><i class="far fa-clock"></i> {{ dest.recommended_days }}天</span>
+                <span>¥{{ dest.ticket_price }}</span>
+                <span><i class="far fa-eye"></i> {{ dest.visit_count }}</span>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% if is_paginated %}
+<div class="pagination">
+    {% if page_obj.has_previous %}
+    <a href="?{% if active_category %}category={{ active_category }}&{% endif %}page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">上一页</a>
+    {% else %}
+    <span class="btn btn-outline btn-sm" style="opacity:0.4;">上一页</span>
+    {% endif %}
+    <span class="pagination-info">第 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} 页</span>
+    {% if page_obj.has_next %}
+    <a href="?{% if active_category %}category={{ active_category }}&{% endif %}page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">下一页</a>
+    {% else %}
+    <span class="btn btn-outline btn-sm" style="opacity:0.4;">下一页</span>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-search" style="font-size: 48px; color: #aab3bf; margin-bottom: 16px; display: block;"></i>
+    <h3>暂无景点</h3>
+    <p>没有找到匹配的景点。</p>
+    <a href="{% url 'destination_list' %}" class="btn btn-accent" style="margin-top: 12px;">查看全部景点</a>
+</div>
+{% endif %}
+{% endblock %}

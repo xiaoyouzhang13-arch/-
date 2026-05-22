@@ -1,10 +1,221 @@
 {% extends 'base.html' %}
 
+{% block title %}登录 - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        max-width: 420px;
+        margin: 0 auto;
+        padding: var(--spacing-xl);
+    }
+
+    .auth-card {
+        background-color: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xxl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .auth-header h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .auth-header p {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 14px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: var(--spacing-md);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        font-size: 15px;
+        color: var(--text-primary);
+        background-color: var(--bg-primary);
+        transition: all var(--transition-fast);
+    }
+
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .form-group input::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .btn-auth {
+        width: 100%;
+        padding: var(--spacing-md);
+        font-size: 15px;
+        font-weight: 600;
+        border-radius: var(--radius-md);
+        border: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+
+    .btn-auth-primary {
+        background-color: var(--primary-color);
+        color: white;
+        box-shadow: 0 4px 12px rgba(229, 75, 79, 0.25);
+    }
+
+    .btn-auth-primary:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(229, 75, 79, 0.3);
+    }
+
+    .btn-auth-secondary {
+        background-color: var(--bg-tertiary);
+        color: var(--text-secondary);
+    }
+
+    .btn-auth-secondary:hover {
+        background-color: var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: var(--spacing-xl);
+        padding-top: var(--spacing-xl);
+        border-top: 1px solid var(--border-light);
+    }
+
+    .auth-footer p {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .auth-footer a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+
+    /* 错误信息 */
+    .errorlist {
+        list-style: none;
+        padding: 0;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .errorlist li {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    @media (max-width: 768px) {
+        .auth-container {
+            padding: var(--spacing-lg);
+        }
+
+        .auth-card {
+            padding: var(--spacing-lg);
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-    <h2>登录</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">登录</button>
-    </form>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h2>欢迎回来</h2>
+                <p>登录您的账号，继续探索心灵智码</p>
+            </div>
+            
+            <form method="post" class="auth-form">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="errorlist">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="id_username">用户名</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="errorlist">
+                            {% for error in form.username.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_password">密码</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="errorlist">
+                            {% for error in form.password.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-auth btn-auth-primary">
+                        <i class="fas fa-sign-in-alt"></i> 登录
+                    </button>
+                </div>
+            </form>
+
+            <div class="auth-footer">
+                <p>还没有账号？<a href="/accounts/register/">立即注册</a></p>
+            </div>
+        </div>
+    </div>
 {% endblock %}

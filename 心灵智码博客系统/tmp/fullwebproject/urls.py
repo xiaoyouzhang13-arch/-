@@ -30,7 +30,8 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('files/', include('filemanager.urls')),
     path('ai/', include('ai_assistant.urls')),
-    # path('search/', include('search_app.urls')),  # 暂时禁用，需要chromadb
+    path('travel/', include('travel.urls')),
+    path('search/', include('search_app.urls')),
 ]
 
 if settings.DEBUG:

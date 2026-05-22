@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}AI 智能规划 - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    margin-bottom: 28px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.page-subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.ai-form {
+    max-width: 520px;
+    margin-bottom: 40px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-white);
+    transition: border-color 0.15s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-row .form-group { flex: 1; }
+
+.error-msg {
+    background: #fce8e6;
+    border: 1px solid #f5c6c0;
+    color: #7d2a24;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+/* 结果区域 */
+.result-section {
+    margin-top: 32px;
+}
+
+.result-header {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent);
+}
+
+.result-day {
+    margin-bottom: 24px;
+}
+
+.day-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+
+.item-card {
+    display: flex;
+    gap: 14px;
+    padding: 12px 16px;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    align-items: flex-start;
+}
+
+.item-time {
+    min-width: 100px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding-top: 1px;
+}
+
+.item-body { flex: 1; }
+
+.item-body .item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.item-body .item-notes {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.item-transport {
+    font-size: 11px;
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    background: #f7f8fa;
+    border-radius: var(--radius);
+    white-space: nowrap;
+}
+
+.action-bar {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+    .form-row { flex-direction: column; gap: 0; }
+    .item-card { flex-wrap: wrap; gap: 8px; }
+    .item-time { min-width: 70px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">AI 智能规划</h1>
+    <p class="page-subtitle">输入目的地、天数和预算，AI 为你自动生成详细行程</p>
+</div>
+
+{% if error %}
+<div class="error-msg"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+{% endif %}
+
+{% if not result %}
+<form method="post" class="ai-form">
+    {% csrf_token %}
+    <div class="form-group">
+        <label>目的地 <span style="color: var(--accent);">*</span></label>
+        <input type="text" name="destination" placeholder="例如：云南丽江、日本东京..." value="{{ form_data.destination|default:'' }}" required>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>天数</label>
+            <input type="number" name="days" value="{{ form_data.days|default:'3' }}" min="1" max="30">
+        </div>
+        <div class="form-group">
+            <label>预算（元）</label>
+            <input type="text" name="budget" value="{{ form_data.budget|default:'3000' }}" placeholder="3000">
+        </div>
+    </div>
+    <div class="form-group">
+        <label>旅行偏好</label>
+        <input type="text" name="preferences" value="{{ form_data.preferences|default:'经典景点,美食' }}" placeholder="经典景点,美食,自然风光...">
+    </div>
+    <button type="submit" class="btn btn-accent btn-lg">
+        <i class="fas fa-robot"></i> 开始生成
+    </button>
+</form>
+{% endif %}
+
+{% if result %}
+<div class="result-section">
+    <div class="result-header"><i class="fas fa-robot"></i> AI 生成的行程</div>
+
+    {% for day in result.days %}
+    <div class="result-day">
+        <div class="day-label">第{{ day.day }}天</div>
+        {% for item in day.items %}
+        <div class="item-card">
+            <div class="item-time">{{ item.start_time }}-{{ item.end_time }}</div>
+            <div class="item-body">
+                <div class="item-title">{{ item.title }}</div>
+                {% if item.notes %}
+                <div class="item-notes">{{ item.notes }}</div>
+                {% endif %}
+            </div>
+            <div class="item-transport">{{ item.transportation }}</div>
+        </div>
+        {% empty %}
+        <div style="padding: 12px; color: var(--text-secondary); font-size: 13px;">当天暂无安排</div>
+        {% endfor %}
+    </div>
+    {% empty %}
+    <div style="padding: 20px; text-align: center; color: var(--text-secondary);">AI 未能生成有效行程，请换个目的地重试。</div>
+    {% endfor %}
+
+    <div class="action-bar">
+        <a href="{% url 'generate_itinerary_page' %}" class="btn btn-outline">
+            <i class="fas fa-redo"></i> 重新生成
+        </a>
+        <a href="{% url 'create_trip' %}" class="btn btn-accent">
+            <i class="fas fa-plus"></i> 基于此创建行程
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

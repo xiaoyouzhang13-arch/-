@@ -47,6 +47,8 @@ class PostListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['active_feed'] = self.request.GET.get('feed', 'recommend')
+        context['categories'] = Category.objects.all()
+        context['all_tags'] = Tag.objects.annotate(post_count=Count('posts')).order_by('-post_count')[:15]
         return context
 
 

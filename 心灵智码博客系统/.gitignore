@@ -35,3 +35,10 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.bak
+
+# Claude Code
+.claude/
+.superpowers/
+
+# Project docs (generated)
+docs/

@@ -1,60 +1,417 @@
+<style>
+    /* ===== AI互动模块样式 ===== */
+    
+    .ai-interaction {
+        background-color: var(--bg-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+    }
+
+    .ai-interaction h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .ai-interaction h3 i {
+        color: var(--tech-blue);
+        font-size: 18px;
+    }
+
+    /* 聊天容器 */
+    .chat-container {
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+        border: 1px solid var(--border-color);
+        min-height: 280px;
+    }
+
+    #chat-messages {
+        max-height: 320px;
+        overflow-y: auto;
+        margin-bottom: var(--spacing-md);
+        padding-right: var(--spacing-xs);
+    }
+
+    #chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #chat-messages::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+        border-radius: 3px;
+    }
+
+    #chat-messages::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+    #chat-messages::-webkit-scrollbar-thumb:hover {
+        background: var(--text-tertiary);
+    }
+
+    /* 消息气泡 */
+    .message {
+        max-width: 85%;
+        margin-bottom: var(--spacing-md);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-fast);
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ai-message {
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 4px;
+        margin-right: auto;
+        position: relative;
+    }
+
+    .ai-message::before {
+        content: '';
+        position: absolute;
+        bottom: 8px;
+        left: -8px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-right: 8px solid var(--border-color);
+        border-bottom: 8px solid transparent;
+    }
+
+    .ai-message::after {
+        content: '';
+        position: absolute;
+        bottom: 8px;
+        left: -6px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-right: 8px solid var(--bg-primary);
+        border-bottom: 8px solid transparent;
+    }
+
+    .user-message {
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
+        margin-left: auto;
+        position: relative;
+    }
+
+    .user-message::before {
+        content: '';
+        position: absolute;
+        bottom: 8px;
+        right: -8px;
+        width: 0;
+        height: 0;
+        border-top: 8px solid transparent;
+        border-left: 8px solid var(--primary-color);
+        border-bottom: 8px solid transparent;
+    }
+
+    .message p {
+        margin: 0;
+        line-height: 1.6;
+        font-size: 14px;
+        word-break: break-word;
+    }
+
+    .user-message p {
+        color: rgba(255, 255, 255, 0.95);
+    }
+
+    /* 加载状态 */
+    .loading-message {
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 4px;
+        margin-right: auto;
+    }
+
+    .loading-message p {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .typing-indicator {
+        display: flex;
+        gap: 4px;
+        margin-left: var(--spacing-xs);
+    }
+
+    .typing-indicator span {
+        width: 6px;
+        height: 6px;
+        background-color: var(--primary-color);
+        border-radius: 50%;
+        animation: typing-bounce 1.4s infinite ease-in-out;
+    }
+
+    .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing-bounce {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+
+    .error-message {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        border-radius: var(--radius-md);
+    }
+
+    /* 聊天输入框 */
+    .chat-input {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+
+    #chat-query {
+        flex: 1;
+        padding: var(--spacing-md);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        font-size: 15px;
+        transition: all var(--transition-fast);
+        background-color: var(--bg-primary);
+    }
+
+    #chat-query:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    #chat-query::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    #send-query {
+        padding: var(--spacing-md) var(--spacing-lg);
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: var(--radius-lg);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        box-shadow: 0 4px 12px rgba(229, 75, 79, 0.25);
+    }
+
+    #send-query:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(229, 75, 79, 0.3);
+    }
+
+    #send-query:active {
+        transform: translateY(0);
+    }
+
+    #send-query i {
+        font-size: 14px;
+    }
+
+    /* 热门话题 */
+    .topics-container {
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-md);
+        border: 1px solid var(--border-color);
+    }
+
+    #topics-list {
+        margin-bottom: var(--spacing-md);
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .topic-item {
+        padding: var(--spacing-md);
+        background-color: var(--bg-primary);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .topic-item:hover {
+        border-color: var(--primary-color);
+        box-shadow: var(--shadow-sm);
+        transform: translateX(4px);
+    }
+
+    .topic-item h4 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        line-height: 1.4;
+    }
+
+    .topic-item p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-xs);
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .topic-item small {
+        font-size: 12px;
+        color: var(--text-tertiary);
+    }
+
+    #generate-topic {
+        width: 100%;
+        padding: var(--spacing-md);
+        background: linear-gradient(135deg, var(--tech-blue) 0%, var(--info-purple) 100%);
+        color: white;
+        border: none;
+        border-radius: var(--radius-lg);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-xs);
+        box-shadow: 0 4px 12px rgba(74, 144, 217, 0.3);
+    }
+
+    #generate-topic:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(74, 144, 217, 0.4);
+    }
+
+    #generate-topic:active {
+        transform: translateY(0);
+    }
+
+    #generate-topic:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .ai-interaction {
+            padding: var(--spacing-md);
+        }
+
+        .message {
+            max-width: 95%;
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+
+        .message p {
+            font-size: 13px;
+        }
+
+        #send-query {
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 13px;
+        }
+
+        #chat-query {
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-size: 14px;
+        }
+    }
+</style>
+
 <div class="ai-interaction">
-    <h3>智能问答助手</h3>
-    <div class="chat-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-        <div id="chat-messages" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px;">
-            <div class="message ai-message" style="background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+    <h3><i class="fas fa-robot"></i> 智能问答助手</h3>
+    <div class="chat-container">
+        <div id="chat-messages">
+            <div class="message ai-message">
                 <p>你好！我是社区智能助手，有什么可以帮助你的吗？例如：如何发布博客、论坛规则、内容分类等问题。</p>
             </div>
         </div>
-        <div class="chat-input" style="display: flex;">
-            <input type="text" id="chat-query" placeholder="请输入你的问题..." style="flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; margin-right: 10px;">
-            <button id="send-query" class="btn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">发送</button>
+        <div class="chat-input">
+            <input type="text" id="chat-query" placeholder="请输入你的问题..." aria-label="输入问题">
+            <button id="send-query" aria-label="发送">
+                <i class="fas fa-paper-plane"></i> 发送
+            </button>
         </div>
     </div>
 
-    <h3>热门话题</h3>
-    <div class="topics-container" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px;">
+    <h3><i class="fas fa-hotdog"></i> 热门话题</h3>
+    <div class="topics-container">
         <div id="topics-list">
             {% for topic in topics %}
-            <div class="topic-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0;">
+            <div class="topic-item">
                 <h4>{{ topic.title }}</h4>
                 <p>{{ topic.content|truncatewords:20 }}</p>
-                <small style="color: #666;">{{ topic.generated_at }}</small>
+                <small>{{ topic.generated_at }}</small>
             </div>
             {% empty %}
-            <p>暂无话题，点击下方按钮生成新话题</p>
+            <div class="topic-item" style="text-align: center;">
+                <p>暂无话题，点击下方按钮生成新话题</p>
+            </div>
             {% endfor %}
         </div>
-        <button id="generate-topic" class="btn" style="margin-top: 15px; padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">生成新话题</button>
+        <button id="generate-topic">
+            <i class="fas fa-magic"></i> 生成新话题
+        </button>
     </div>
 </div>
 
 <script>
-    // 确保DOM加载完成后执行
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM加载完成，初始化AI交互功能');
+        console.log('AI交互功能初始化');
         
         // 聊天功能
         const sendButton = document.getElementById('send-query');
         if (sendButton) {
-            console.log('找到发送按钮，绑定点击事件');
             sendButton.addEventListener('click', function() {
-                console.log('发送按钮被点击');
-                const query = document.getElementById('chat-query').value;
+                const query = document.getElementById('chat-query').value.trim();
                 if (query) {
-                    console.log('发送查询:', query);
-                    // 添加用户消息
                     const chatMessages = document.getElementById('chat-messages');
+                    
+                    // 添加用户消息
                     chatMessages.innerHTML += `
-                        <div class="message user-message" style="background-color: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: right;">
+                        <div class="message user-message">
                             <p>${query}</p>
                         </div>
                     `;
                     
-                    // 显示加载状态
+                    // 显示加载状态（打字机效果）
                     chatMessages.innerHTML += `
-                        <div class="message loading-message" id="loading-message" style="background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                            <p>思考中...</p>
+                        <div class="message loading-message" id="loading-message">
+                            <p>思考中<span class="typing-indicator"><span></span><span></span><span></span></span></p>
                         </div>
                     `;
                     
@@ -65,7 +422,6 @@
                     chatMessages.scrollTop = chatMessages.scrollHeight;
                     
                     // 发送请求
-                    console.log('发送AJAX请求到:', '{% url "ai_chat" %}');
                     fetch('{% url "ai_chat" %}', {
                         method: 'POST',
                         headers: {
@@ -75,12 +431,8 @@
                         },
                         body: 'query=' + encodeURIComponent(query)
                     })
-                    .then(response => {
-                        console.log('收到响应:', response);
-                        return response.json();
-                    })
+                    .then(response => response.json())
                     .then(data => {
-                        console.log('响应数据:', data);
                         // 移除加载状态
                         const loadingMessage = document.getElementById('loading-message');
                         if (loadingMessage) {
@@ -89,7 +441,7 @@
                         
                         // 添加AI回复
                         chatMessages.innerHTML += `
-                            <div class="message ai-message" style="background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                            <div class="message ai-message">
                                 <p>${data.response}</p>
                             </div>
                         `;
@@ -104,31 +456,31 @@
                             loadingMessage.remove();
                         }
                         chatMessages.innerHTML += `
-                            <div class="message error-message" style="background-color: #ffebee; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                            <div class="message error-message">
                                 <p>抱歉，我暂时无法回答这个问题，请稍后再试。</p>
                             </div>
                         `;
                     });
-                } else {
-                    console.log('查询为空');
                 }
             });
-        } else {
-            console.error('未找到发送按钮');
+            
+            // 回车键发送
+            document.getElementById('chat-query').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    sendButton.click();
+                }
+            });
         }
         
         // 生成话题功能
         const generateButton = document.getElementById('generate-topic');
         if (generateButton) {
-            console.log('找到生成话题按钮，绑定点击事件');
             generateButton.addEventListener('click', function() {
-                console.log('生成话题按钮被点击');
                 const button = this;
-                const originalText = button.textContent;
-                button.textContent = '生成中...';
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
                 button.disabled = true;
                 
-                console.log('发送AJAX请求到:', '{% url "generate_topic" %}');
                 fetch('{% url "generate_topic" %}', {
                     method: 'POST',
                     headers: {
@@ -136,55 +488,44 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 })
-                .then(response => {
-                    console.log('收到响应:', response);
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log('响应数据:', data);
-                    button.textContent = originalText;
+                    button.innerHTML = originalText;
                     button.disabled = false;
                     
                     // 添加新话题
                     const topicsList = document.getElementById('topics-list');
                     topicsList.innerHTML = `
-                        <div class="topic-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                        <div class="topic-item">
                             <h4>${data.title}</h4>
                             <p>${data.content.substring(0, 100)}${data.content.length > 100 ? '...' : ''}</p>
-                            <small style="color: #666;">刚刚生成</small>
+                            <small>刚刚生成</small>
                         </div>
                         ${topicsList.innerHTML}
                     `;
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    button.textContent = originalText;
+                    button.innerHTML = originalText;
                     button.disabled = false;
                     alert('生成话题失败，请稍后再试。');
                 });
             });
-        } else {
-            console.error('未找到生成话题按钮');
         }
         
-        // 页面加载时获取热门话题
-        console.log('获取热门话题');
+        // 获取热门话题
         fetch('{% url "get_featured_topics" %}')
-        .then(response => {
-            console.log('收到响应:', response);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('响应数据:', data);
             if (data.topics && data.topics.length > 0) {
                 const topicsList = document.getElementById('topics-list');
                 topicsList.innerHTML = '';
                 data.topics.forEach(topic => {
                     topicsList.innerHTML += `
-                        <div class="topic-item" style="padding: 10px; border-bottom: 1px solid #e0e0e0;">
+                        <div class="topic-item">
                             <h4>${topic.title}</h4>
                             <p>${topic.content.substring(0, 100)}${topic.content.length > 100 ? '...' : ''}</p>
-                            <small style="color: #666;">${topic.generated_at}</small>
+                            <small>${topic.generated_at}</small>
                         </div>
                     `;
                 });

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}删除旅行计划 - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+.confirm-card {
+    max-width: 480px;
+    margin: 60px auto;
+    text-align: center;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 48px 32px;
+}
+
+.confirm-card .danger-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #fce8e6;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+
+.confirm-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.confirm-card .trip-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+
+.confirm-card .warning-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+    line-height: 1.6;
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-card">
+    <div class="danger-icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <h2>确认删除</h2>
+    <div class="trip-name">{{ trip.title }}</div>
+    <p class="warning-text">
+        此操作将永久删除此旅行计划及其所有行程安排和预算数据。<br>
+        此操作<strong>不可恢复</strong>。
+    </p>
+    <div class="btn-group">
+        <form method="post" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn" style="background: #dc3545; color: white; padding: 10px 28px;">
+                <i class="fas fa-trash"></i> 确认删除
+            </button>
+        </form>
+        <a href="{% url 'trip_detail' slug=trip.slug %}" class="btn btn-outline" style="padding: 10px 28px;">取消</a>
+    </div>
+</div>
+{% endblock %}

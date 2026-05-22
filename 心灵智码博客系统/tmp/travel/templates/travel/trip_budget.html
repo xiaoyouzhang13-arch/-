@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}预算管理 - {{ trip.title }} - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.card h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.budget-list { margin-bottom: 16px; }
+
+.budget-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+}
+.budget-row:last-child { border-bottom: none; }
+
+.budget-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    background: #f0f1f3;
+    color: var(--text-secondary);
+}
+
+.budget-info { flex: 1; }
+
+.budget-info .cat-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.budget-amounts { text-align: right; font-size: 13px; }
+
+.budget-amounts .planned {
+    color: #2c6e91;
+    font-weight: 600;
+}
+
+.budget-amounts .actual {
+    color: #2d5a35;
+    font-weight: 600;
+}
+
+.budget-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    font-weight: 700;
+    font-size: 15px;
+    border-top: 2px solid var(--text-primary);
+    margin-top: 12px;
+}
+
+.chart-container {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 16px;
+    background: var(--bg-page);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+}
+
+.form-grid input,
+.form-grid select {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.placeholder-text {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 20px;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">预算管理：{{ trip.title }}</h1>
+    <a href="{% url 'trip_detail' slug=trip.slug %}" class="btn btn-outline btn-sm">
+        <i class="fas fa-arrow-left"></i> 返回行程
+    </a>
+</div>
+
+<div class="content-grid">
+    <div>
+        <div class="card">
+            <h2>预算明细</h2>
+            <div class="budget-list">
+                {% for item in budget_items %}
+                <div class="budget-row">
+                    <div class="budget-icon">
+                        {% if item.category == 'transport' %}<i class="fas fa-bus"></i>
+                        {% elif item.category == 'accommodation' %}<i class="fas fa-hotel"></i>
+                        {% elif item.category == 'dining' %}<i class="fas fa-utensils"></i>
+                        {% elif item.category == 'tickets' %}<i class="fas fa-ticket-alt"></i>
+                        {% elif item.category == 'shopping' %}<i class="fas fa-shopping-bag"></i>
+                        {% else %}<i class="fas fa-ellipsis-h"></i>
+                        {% endif %}
+                    </div>
+                    <div class="budget-info">
+                        <div class="cat-name">{{ item.get_category_display }}</div>
+                        {% if item.notes %}
+                        <div style="font-size: 11px; color: var(--text-secondary);">{{ item.notes }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="budget-amounts">
+                        <div class="planned">预算 ¥{{ item.planned_amount }}</div>
+                        <div class="actual">实际 ¥{{ item.actual_amount|default:"-" }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="placeholder-text">暂无预算项</div>
+                {% endfor %}
+            </div>
+            <div class="budget-total">
+                <span>合计</span>
+                <div style="text-align: right;">
+                    <div style="font-size: 13px; color: #2c6e91;">预算 ¥{{ budget_total_planned }}</div>
+                    <div style="font-size: 13px; color: #2d5a35;">实际 ¥{{ budget_total_actual }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+            <h2>{% if budget_items %}编辑{% else %}添加{% endif %}预算项</h2>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                {{ budget_form.category }}
+                {{ budget_form.planned_amount }}
+                {{ budget_form.actual_amount }}
+                <div class="full-width">{{ budget_form.notes }}</div>
+                <div class="full-width">
+                    <button type="submit" class="btn btn-accent btn-sm" style="width: 100%;">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <h2>预算分布</h2>
+            <div class="chart-container">
+                <canvas id="budget-chart" width="300" height="300"></canvas>
+            </div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+            <h2>预算执行</h2>
+            <div class="chart-container">
+                <canvas id="compare-chart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var categories = {{ chart_categories|safe }};
+    var plannedData = {{ chart_planned|safe }};
+    var actualData = {{ chart_actual|safe }};
+    var hasData = plannedData.some(function(v) { return v > 0; });
+
+    function drawPie(canvasId, labels, values, colors) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var w = canvas.width, h = canvas.height;
+        var cx = w / 2, cy = h / 2, r = Math.min(cx, cy) - 10;
+        ctx.clearRect(0, 0, w, h);
+
+        var total = values.reduce(function(a, b) { return a + b; }, 0);
+        if (total === 0) {
+            ctx.fillStyle = '#aab3bf';
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('暂无数据', cx, cy);
+            return;
+        }
+
+        var startAngle = -Math.PI / 2;
+        for (var i = 0; i < values.length; i++) {
+            var sliceAngle = (values[i] / total) * 2 * Math.PI;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, r, startAngle, startAngle + sliceAngle);
+            ctx.closePath();
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.fill();
+            startAngle += sliceAngle;
+        }
+    }
+
+    var colors = ['#2c6e91', '#c44d34', '#e8b44d', '#5a6b7d', '#2d5a35', '#aab3bf'];
+
+    if (hasData) {
+        drawPie('budget-chart', categories, plannedData, colors);
+        drawPie('compare-chart', ['预算', '实际'], [plannedData.reduce(function(a,b){return a+b;},0), actualData.reduce(function(a,b){return a+b;},0)], ['#2c6e91', '#2d5a35']);
+    }
+})();
+</script>
+{% endblock %}

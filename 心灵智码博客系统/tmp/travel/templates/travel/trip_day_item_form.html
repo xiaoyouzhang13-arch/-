@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}添加行程项目 - {{ trip.title }} - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+.form-container {
+    max-width: 520px;
+    margin: 40px auto;
+}
+
+.form-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+}
+
+.form-card h2 {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.form-card label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.form-card input,
+.form-card select,
+.form-card textarea {
+    width: 100%;
+    padding: 9px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-white);
+    margin-bottom: 16px;
+    box-sizing: border-box;
+}
+
+.form-card input:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.day-info {
+    background: var(--bg-page);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-card">
+        <h2>为 {{ trip.title }} 添加行程</h2>
+        <div class="day-info">
+            <i class="fas fa-calendar-day"></i>
+            第{{ day.day_number }}天 — {{ day.date|date:"Y-m-d" }}
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.destination.label_tag }}{{ form.destination }}
+            {{ form.title.label_tag }}{{ form.title }}
+            {{ form.description.label_tag }}{{ form.description }}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>{{ form.start_time.label_tag }}{{ form.start_time }}</div>
+                <div>{{ form.end_time.label_tag }}{{ form.end_time }}</div>
+            </div>
+            {{ form.transportation.label_tag }}{{ form.transportation }}
+            {{ form.order.label_tag }}{{ form.order }}
+            {{ form.notes.label_tag }}{{ form.notes }}
+            <button type="submit" class="btn btn-accent" style="width: 100%;">
+                <i class="fas fa-plus"></i> 添加活动
+            </button>
+        </form>
+    </div>
+    <div style="text-align: center; margin-top: 16px;">
+        <a href="{% url 'trip_detail' slug=trip.slug %}" class="btn btn-outline btn-sm">返回行程</a>
+    </div>
+</div>
+{% endblock %}

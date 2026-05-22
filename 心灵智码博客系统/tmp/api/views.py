@@ -3,9 +3,11 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from accounts.models import CustomUser
 from blog.models import Post, Comment, Category, Tag
 from forum.models import Forum, Topic, Post as ForumPost
+from travel.models import Destination, TripPlan, TravelNote
 from .serializers import (
     CustomUserSerializer, PostSerializer, CommentSerializer, CategorySerializer, TagSerializer,
-    ForumSerializer, TopicSerializer, ForumPostSerializer
+    ForumSerializer, TopicSerializer, ForumPostSerializer,
+    DestinationSerializer, TripPlanSerializer, TravelNoteSerializer,
 )
 
 
@@ -55,3 +57,21 @@ class ForumPostViewSet(viewsets.ModelViewSet):
     queryset = ForumPost.objects.all()
     serializer_class = ForumPostSerializer
     permission_classes = [IsAuthenticated]
+
+
+class DestinationViewSet(viewsets.ModelViewSet):
+    queryset = Destination.objects.all()
+    serializer_class = DestinationSerializer
+    permission_classes = [AllowAny]
+
+
+class TripPlanViewSet(viewsets.ModelViewSet):
+    queryset = TripPlan.objects.filter(is_public=True)
+    serializer_class = TripPlanSerializer
+    permission_classes = [AllowAny]
+
+
+class TravelNoteViewSet(viewsets.ModelViewSet):
+    queryset = TravelNote.objects.filter(is_published=True)
+    serializer_class = TravelNoteSerializer
+    permission_classes = [AllowAny]

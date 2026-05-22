@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ trip.title }} - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-weight: 600;
+}
+.status-badge.planning { background: #e3edf3; color: #2c6e91; }
+.status-badge.ongoing { background: #e6f0e8; color: #2d5a35; }
+.status-badge.completed { background: #fce8e6; color: #7d2a24; }
+
+.trip-meta-bar {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+.trip-meta-bar span { display: inline-flex; align-items: center; gap: 5px; }
+
+.btn-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* 预算卡片 */
+.budget-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.budget-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+}
+
+.budget-card .amount {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.budget-card .amount.planned { color: #2c6e91; }
+.budget-card .amount.actual { color: #2d5a35; }
+.budget-card .amount.diff { color: var(--accent); }
+
+.budget-card .label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* 时间线 */
+.timeline {
+    position: relative;
+    padding-left: 36px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--border);
+}
+
+.timeline-day {
+    position: relative;
+    margin-bottom: 28px;
+}
+
+.day-marker {
+    position: absolute;
+    left: -36px;
+    top: 0;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    z-index: 1;
+}
+
+.day-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.day-header {
+    background: #f7f8fa;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.day-header h3 { font-size: 15px; font-weight: 600; }
+
+.day-header .day-date { font-size: 12px; color: var(--text-secondary); }
+
+.item-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+}
+.item-row:last-child { border-bottom: none; }
+
+.item-time {
+    min-width: 90px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding-top: 2px;
+}
+
+.item-icon {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    background: #e8eaef;
+}
+
+.item-content { flex: 1; }
+
+.item-content .item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.item-content .item-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.item-content .item-notes {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.item-actions a, .item-actions button {
+    background: none;
+    border: none;
+    color: #aab3bf;
+    cursor: pointer;
+    padding: 4px;
+    font-size: 12px;
+    text-decoration: none;
+}
+.item-actions a:hover, .item-actions button:hover { color: var(--accent); }
+
+.day-notes {
+    padding: 10px 16px;
+    background: #fef6e8;
+    font-size: 12px;
+    color: #8b6914;
+    border-top: 1px solid var(--border);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .budget-summary { grid-template-columns: 1fr; }
+    .item-row { flex-wrap: wrap; }
+    .item-time { min-width: 70px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ trip.title }}</h1>
+        <span class="status-badge {{ trip.status }}">{{ trip.get_status_display }}</span>
+    </div>
+    <div class="btn-group">
+        {% if user.is_authenticated and user == trip.user or user.is_superuser %}
+        <a href="{% url 'update_trip' slug=trip.slug %}" class="btn btn-outline btn-sm"><i class="fas fa-edit"></i> 编辑</a>
+        <a href="{% url 'delete_trip' slug=trip.slug %}" class="btn btn-sm" style="background: #dc3545; color: white;"><i class="fas fa-trash"></i> 删除</a>
+        {% endif %}
+        {% if trip.is_public and user.is_authenticated and user != trip.user %}
+        <a href="{% url 'clone_trip' slug=trip.slug %}" class="btn btn-accent btn-sm"><i class="fas fa-copy"></i> 克隆此计划</a>
+        {% endif %}
+        <a href="{% url 'trip_map' slug=trip.slug %}" class="btn btn-outline btn-sm"><i class="fas fa-map"></i> 地图</a>
+        <a href="{% url 'trip_budget' slug=trip.slug %}" class="btn btn-outline btn-sm"><i class="fas fa-chart-pie"></i> 预算</a>
+    </div>
+</div>
+
+<div class="trip-meta-bar">
+    <span><i class="fas fa-map-marker-alt" style="color: var(--accent);"></i> {% if trip.destination %}{{ trip.destination.name }}{% else %}未指定目的地{% endif %}</span>
+    <span><i class="far fa-calendar"></i> {{ trip.start_date|date:"Y-m-d" }} ~ {{ trip.end_date|date:"Y-m-d" }}</span>
+    <span>{{ trip.days_count }}天</span>
+    <span>预算 ¥{{ trip.budget_total }}</span>
+    {% if trip.preferences %}
+    <span>{{ trip.preferences }}</span>
+    {% endif %}
+</div>
+
+{% if trip.description %}
+<div class="card" style="margin-bottom: 28px;">
+    <p style="margin: 0; font-size: 14px; color: var(--text-secondary);">{{ trip.description }}</p>
+</div>
+{% endif %}
+
+{% if budget_total_planned > 0 %}
+<div class="budget-summary">
+    <div class="budget-card">
+        <div class="amount planned">¥{{ budget_total_planned }}</div>
+        <div class="label">预算总额</div>
+    </div>
+    <div class="budget-card">
+        <div class="amount actual">¥{{ budget_total_actual }}</div>
+        <div class="label">实际花费</div>
+    </div>
+    <div class="budget-card">
+        <div class="amount diff">¥{{ budget_total_planned|add:budget_total_actual|default:0 }}</div>
+        <div class="label">差额</div>
+    </div>
+</div>
+{% endif %}
+
+<h2 class="section-title">行程安排</h2>
+
+<!-- 甘特图可视化 -->
+<div class="gantt-container" style="margin-bottom: 32px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; overflow-x: auto;">
+    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--text-secondary);">
+        <i class="fas fa-chart-bar"></i> 时间线总览
+    </h4>
+    <div id="gantt-chart"></div>
+</div>
+
+<div class="timeline">
+    {% for day in days %}
+    <div class="timeline-day">
+        <div class="day-marker">{{ day.day_number }}</div>
+        <div class="day-card">
+            <div class="day-header">
+                <h3>第{{ day.day_number }}天</h3>
+                <span class="day-date">{{ day.date|date:"Y-m-d" }}</span>
+            </div>
+            <div class="day-items">
+                {% for item in day.items.all %}
+                <div class="item-row">
+                    <div class="item-time">
+                        {% if item.start_time %}{{ item.start_time|time:"H:i" }}{% else %}全天{% endif %}
+                        {% if item.end_time %}- {{ item.end_time|time:"H:i" }}{% endif %}
+                    </div>
+                    <div class="item-icon">
+                        {% if item.transportation == 'walk' %}<i class="fas fa-walking"></i>
+                        {% elif item.transportation == 'bus' %}<i class="fas fa-bus"></i>
+                        {% elif item.transportation == 'metro' %}<i class="fas fa-subway"></i>
+                        {% elif item.transportation == 'taxi' %}<i class="fas fa-taxi"></i>
+                        {% else %}<i class="fas fa-car"></i>
+                        {% endif %}
+                    </div>
+                    <div class="item-content">
+                        <div class="item-title">
+                            {{ item.title }}
+                            {% if item.destination %}
+                            <a href="{% url 'destination_detail' slug=item.destination.slug %}" style="font-size: 12px; color: var(--accent); margin-left: 6px;">
+                                <i class="fas fa-external-link-alt"></i> {{ item.destination.name }}
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% if item.description %}
+                        <div class="item-desc">{{ item.description }}</div>
+                        {% endif %}
+                        {% if item.notes %}
+                        <div class="item-notes"><i class="fas fa-info-circle"></i> {{ item.notes }}</div>
+                        {% endif %}
+                    </div>
+                    {% if user.is_authenticated and user == trip.user or user.is_superuser %}
+                    <div class="item-actions">
+                        <form method="post" action="{% url 'delete_day_item' item_id=item.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('确定删除此行程项目？')"><i class="fas fa-times"></i></button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div style="padding: 24px; text-align: center; color: var(--text-secondary); font-size: 13px;">
+                    暂无行程安排
+                    {% if user.is_authenticated and user == trip.user or user.is_superuser %}
+                    <form method="post" action="{% url 'add_day_item' trip_slug=trip.slug day_id=day.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-accent btn-sm" style="margin-left: 8px;">
+                            <i class="fas fa-plus"></i> 添加活动
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% if day.notes %}
+            <div class="day-notes">
+                <i class="fas fa-pencil-alt"></i> {{ day.notes }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 60px 20px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-secondary);">
+        <i class="fas fa-calendar-plus" style="font-size: 48px; color: #aab3bf; margin-bottom: 16px; display: block;"></i>
+        <h3 style="color: var(--text-primary);">还没有行程安排</h3>
+        <p>AI 可以帮你自动生成行程，或者手动添加每日活动。</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 住宿交通建议 -->
+<div class="tips-section" style="margin-top: 32px;">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="section-title" style="margin-bottom: 0;">住宿交通建议</h2>
+            <button id="load-tips-btn" class="btn btn-accent btn-sm" onclick="loadTips()">
+                <i class="fas fa-robot"></i> AI 生成建议
+            </button>
+        </div>
+        <div id="tips-content" style="margin-top: 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.8;">
+            <p>点击按钮，AI 将根据目的地和预算为你生成住宿、餐饮、交通建议。</p>
+        </div>
+    </div>
+</div>
+
+
+{% if user.is_authenticated and user == trip.user or user.is_superuser %}
+<div style="margin-top: 32px; display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="{% url 'publish_note' slug=trip.slug %}" class="btn btn-accent">
+        <i class="fas fa-pen-fancy"></i> 发布游记
+    </a>
+    <form method="post" action="{% url 'toggle_public' slug=trip.slug %}" style="display:inline;">
+        {% csrf_token %}
+        {% if trip.is_public %}
+            <button type="submit" class="btn btn-outline"><i class="fas fa-lock"></i> 取消公开</button>
+        {% else %}
+            <button type="submit" class="btn btn-outline"><i class="fas fa-globe"></i> 公开为模板</button>
+        {% endif %}
+    </form>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var container = document.getElementById('gantt-chart');
+    if (!container) return;
+    var colors = ['#2c6e91','#c44d34','#e8b44d','#2d5a35','#5a6b7d','#1a2332'];
+    var minH = 6, maxH = 22, span = maxH - minH;
+
+    {% for day in days %}
+    (function(dNum, items) {
+        if (!items.length) return;
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:flex-start;margin-bottom:10px;';
+        var label = document.createElement('div');
+        label.style.cssText = 'width:56px;font-size:11px;color:#c44d34;font-weight:700;padding-top:2px;flex-shrink:0;';
+        label.textContent = 'D'+dNum;
+        row.appendChild(label);
+        var bars = document.createElement('div');
+        bars.style.cssText = 'flex:1;position:relative;height:22px;background:#f0f1f3;border-radius:3px;';
+        items.forEach(function(item,i){
+            var l = ((item.s - minH)/span)*100, w = ((item.e - item.s)/span)*100;
+            if(w<2)w=2; if(l+w>100)w=100-l;
+            var b = document.createElement('div');
+            b.style.cssText = 'position:absolute;left:'+l+'%;width:'+w+'%;height:18px;top:2px;background:'+colors[i%6]+';border-radius:3px;padding:0 6px;font-size:10px;color:white;line-height:18px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;';
+            b.title = item.t+' '+item.s+':00-'+item.e+':00';
+            b.textContent = item.t;
+            bars.appendChild(b);
+        });
+        row.appendChild(bars);
+        container.appendChild(row);
+    })({{ day.day_number }}, [
+        {% for item in day.items.all %}
+        {t:"{{ item.title|escapejs }}",s:{{ item.start_time.hour|default:8 }},e:{{ item.end_time.hour|default:10 }}},
+        {% endfor %}
+    ]);
+    {% endfor %}
+
+    var axis = document.createElement('div');
+    axis.style.cssText = 'display:flex;margin-top:4px;padding-left:56px;';
+    for(var h=minH;h<=maxH;h++){var t=document.createElement('span');t.style.cssText='flex:1;font-size:9px;color:#5a6b7d;text-align:right;';t.textContent=h+'h';axis.appendChild(t);}
+    container.appendChild(axis);
+})();
+
+function loadTips() {
+    var btn = document.getElementById('load-tips-btn');
+    var content = document.getElementById('tips-content');
+    btn.disabled = true;
+    btn.textContent = '生成中...';
+    content.innerHTML = '<p style="color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> AI 正在分析目的地信息...</p>';
+
+    fetch('{% url "trip_tips" slug=trip.slug %}', {
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.tips_html) {
+            content.innerHTML = data.tips_html;
+            btn.style.display = 'none';
+        } else {
+            content.innerHTML = '<p style="color:var(--accent);">生成失败，请重试</p>';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-redo"></i> 重试';
+        }
+    })
+    .catch(function() {
+        content.innerHTML = '<p style="color:var(--accent);">网络错误</p>';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-redo"></i> 重试';
+    });
+}
+</script>
+{% endblock %}

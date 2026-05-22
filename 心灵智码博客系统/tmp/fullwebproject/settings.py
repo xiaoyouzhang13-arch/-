@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'filemanager',
     'ai_assistant',
-    # 'search_app',  # 暂时禁用，需要chromadb
+    'travel',
+    'search_app',
 ]
 
 AUTH_USER_MODEL = 'accounts.CustomUser'

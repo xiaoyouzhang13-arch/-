@@ -40,7 +40,8 @@ def call_deepseek_api(prompt, max_tokens=1000, temperature=0.7):
             settings.DEEPSEEK_API_URL,
             headers=headers,
             json=payload,
-            timeout=30
+            timeout=30,
+            proxies={'http': None, 'https': None}
         )
         
         response.raise_for_status()

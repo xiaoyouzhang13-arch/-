@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}行程模板市场 - 心灵智码{% endblock %}
+
+{% block extra_css %}
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.template-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+}
+.template-card:hover { border-color: var(--accent); }
+
+.template-header {
+    padding: 20px;
+    background: var(--text-primary);
+    color: white;
+}
+
+.template-header h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.template-header .dest {
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+.template-body {
+    padding: 16px;
+}
+
+.template-body .info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    padding: 4px 0;
+}
+
+.template-footer {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.template-footer .author {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+}
+.empty-state h3 { font-size: 18px; color: var(--text-primary); margin-bottom: 8px; }
+
+@media (max-width: 640px) {
+    .template-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">行程模板市场</h1>
+    <a href="{% url 'trip_list' %}" class="btn btn-outline btn-sm">
+        <i class="fas fa-arrow-left"></i> 我的计划
+    </a>
+</div>
+
+{% if trips %}
+<div class="template-grid">
+    {% for trip in trips %}
+    <div class="template-card">
+        <div class="template-header">
+            <h3>{{ trip.title }}</h3>
+            <div class="dest">
+                <i class="fas fa-map-marker-alt"></i> {% if trip.destination %}{{ trip.destination.name }}{% else %}未指定{% endif %}
+            </div>
+        </div>
+        <div class="template-body">
+            <div class="info-row">
+                <span><i class="far fa-calendar"></i> {{ trip.days_count }}天</span>
+                <span><i class="fas fa-coins"></i> ¥{{ trip.budget_total }}</span>
+            </div>
+            <div class="info-row">
+                <span>已安排天数</span>
+                <span>{{ trip.days.count }} 天</span>
+            </div>
+            {% if trip.preferences %}
+            <div class="info-row">
+                <span>偏好</span>
+                <span>{{ trip.preferences }}</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="template-footer">
+            <span class="author">
+                <i class="fas fa-user"></i> {{ trip.user.username }}
+            </span>
+            <div style="display: flex; gap: 6px;">
+                <a href="{% url 'trip_detail' slug=trip.slug %}" class="btn btn-outline btn-sm">查看</a>
+                {% if user.is_authenticated and user != trip.user %}
+                <a href="{% url 'clone_trip' slug=trip.slug %}" class="btn btn-accent btn-sm">
+                    <i class="fas fa-copy"></i> 克隆
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-globe" style="font-size: 48px; color: #aab3bf; margin-bottom: 16px; display: block;"></i>
+    <h3>暂无公开模板</h3>
+    <p>还没有人分享旅行计划模板。</p>
+</div>
+{% endif %}
+{% endblock %}

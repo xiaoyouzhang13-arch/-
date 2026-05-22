@@ -1,98 +1,317 @@
 {% extends 'base.html' %}
 
+{% block title %}心灵智码 - 首页{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== 双入口引导区 ===== */
+    .entry-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 48px;
+    }
+
+    .entry-card {
+        display: block;
+        text-decoration: none;
+        background: var(--bg-white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 40px 32px;
+        text-align: center;
+        transition: border-color 0.15s ease;
+    }
+    .entry-card:hover { text-decoration: none; }
+
+    .entry-card.community:hover { border-color: var(--text-primary); }
+    .entry-card.travel:hover { border-color: var(--accent); }
+
+    .entry-card .entry-icon {
+        font-size: 32px;
+        margin-bottom: 16px;
+    }
+
+    .entry-card .entry-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .entry-card .entry-desc {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 20px;
+    }
+
+    .entry-card.community .btn { background: var(--text-primary); color: white; }
+    .entry-card.community .btn:hover { background: #2c3e50; }
+
+    .entry-card.travel .btn { background: var(--accent); color: white; }
+    .entry-card.travel .btn:hover { background: #a83d2b; }
+
+    .entry-card .entry-links {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 20px;
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+    .entry-card .entry-links a {
+        color: var(--text-secondary);
+        text-decoration: none;
+    }
+    .entry-card .entry-links a:hover { color: var(--accent); }
+
+    /* ===== 双栏内容流 ===== */
+    .dual-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+    }
+
+    .content-col {}
+
+    .col-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid;
+    }
+
+    .col-header.community { border-color: var(--text-primary); }
+    .col-header.community h3 { color: var(--text-primary); }
+
+    .col-header.travel { border-color: var(--accent); }
+    .col-header.travel h3 { color: var(--accent); }
+
+    .col-header h3 {
+        font-size: 17px;
+        font-weight: 700;
+    }
+
+    .col-header a {
+        font-size: 12px;
+        color: var(--text-secondary);
+        text-decoration: none;
+    }
+    .col-header a:hover { color: var(--accent); }
+
+    /* 文章条目 */
+    .content-item {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .content-item .item-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+    .content-item a { color: inherit; text-decoration: none; }
+    .content-item a:hover .item-title { color: var(--accent); }
+
+    .content-item .item-meta {
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+
+    /* 旅行条目 */
+    .trip-item .item-stats {
+        font-size: 11px;
+        color: var(--text-secondary);
+        display: flex;
+        gap: 12px;
+        margin-top: 2px;
+    }
+
+    /* 精选景点 */
+    .featured-destinations {
+        margin-top: 32px;
+    }
+
+    .dest-mini-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .dest-mini {
+        display: block;
+        text-decoration: none;
+        background: var(--bg-white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: border-color 0.15s ease;
+    }
+    .dest-mini:hover { border-color: var(--accent); text-decoration: none; }
+
+    .dest-mini .dest-img {
+        height: 90px;
+        background: #e8eaef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #b0b9c2;
+        font-size: 20px;
+    }
+    .dest-mini .dest-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .dest-mini .dest-info {
+        padding: 10px 12px;
+    }
+    .dest-mini .dest-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    .dest-mini .dest-loc {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+    }
+
+    /* 空状态 */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--text-secondary);
+    }
+    .empty-state h2 {
+        font-size: 20px;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 768px) {
+        .entry-grid { grid-template-columns: 1fr; gap: 20px; }
+        .entry-card { padding: 28px 20px; }
+        .dual-content { grid-template-columns: 1fr; gap: 32px; }
+        .dest-mini-grid { grid-template-columns: 1fr 1fr; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-    <div style="text-align: center; margin-bottom: 40px;">
-        <h1 style="font-size: 36px; color: #333; margin-bottom: 20px;">欢迎使用完整Web项目</h1>
-        <p style="font-size: 18px; color: #666; margin-bottom: 30px;">这是一个功能丰富的Django Web应用，包含以下功能：</p>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px;">
-        <!-- 用户认证 -->
-        <div class="card">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=user%20authentication%20icon%20with%20blue%20color&image_size=square" alt="用户认证" style="width: 80px; height: 80px; margin-bottom: 15px;">
-                <h2 style="color: #333; margin-bottom: 10px;">用户认证</h2>
+    <!-- 双入口引导卡片 -->
+    <div class="entry-grid">
+        <a href="/blog/" class="entry-card community">
+            <div class="entry-icon">📝</div>
+            <div class="entry-title">社区</div>
+            <div class="entry-desc">博客文章 · 技术讨论 · 话题交流<br>分享你的知识与见解</div>
+            <span class="btn">进入社区</span>
+            <div class="entry-links">
+                <a href="/blog/">博客</a>
+                <a href="/forum/">论坛</a>
             </div>
-            <p style="color: #666; margin-bottom: 20px;">支持用户注册、登录、个人资料管理等功能，保障用户数据安全。</p>
-            <div style="text-align: center;">
-                <a href="/accounts/register/" class="btn">立即注册</a>
+        </a>
+        <a href="/travel/destinations/" class="entry-card travel">
+            <div class="entry-icon">✈️</div>
+            <div class="entry-title">旅游</div>
+            <div class="entry-desc">景点探索 · 行程规划 · AI 智能规划<br>规划你的下一段旅程</div>
+            <span class="btn">探索旅游</span>
+            <div class="entry-links">
+                <a href="/travel/destinations/">景点</a>
+                <a href="/travel/trips/">行程</a>
+                <a href="/travel/trips/templates/">模板</a>
             </div>
-        </div>
-        
-        <!-- 博客 -->
-        <div class="card">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=blog%20icon%20with%20purple%20color&image_size=square" alt="博客" style="width: 80px; height: 80px; margin-bottom: 15px;">
-                <h2 style="color: #333; margin-bottom: 10px;">博客</h2>
-            </div>
-            <p style="color: #666; margin-bottom: 20px;">发布文章、分类管理、标签管理、评论功能，让您的内容创作更加便捷。</p>
-            <div style="text-align: center;">
-                <a href="/blog/" class="btn">浏览博客</a>
-            </div>
-        </div>
-        
-        <!-- 论坛 -->
-        <div class="card">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=forum%20icon%20with%20green%20color&image_size=square" alt="论坛" style="width: 80px; height: 80px; margin-bottom: 15px;">
-                <h2 style="color: #333; margin-bottom: 10px;">论坛</h2>
-            </div>
-            <p style="color: #666; margin-bottom: 20px;">创建话题、回复讨论、论坛管理，促进用户之间的交流与互动。</p>
-            <div style="text-align: center;">
-                <a href="/forum/" class="btn">进入论坛</a>
-            </div>
-        </div>
-        
-        <!-- 文件云管理 -->
-        <div class="card">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cloud%20storage%20icon%20with%20blue%20color&image_size=square" alt="文件云管理" style="width: 80px; height: 80px; margin-bottom: 15px;">
-                <h2 style="color: #333; margin-bottom: 10px;">文件云管理</h2>
-            </div>
-            <p style="color: #666; margin-bottom: 20px;">上传、管理、下载文件，支持多种文件格式，提供安全的云存储服务。</p>
-            <div style="text-align: center;">
-                <a href="/files/" class="btn">文件管理</a>
-            </div>
-        </div>
-        
-        <!-- 好友功能 -->
-        <div class="card">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=friends%20icon%20with%20green%20color&image_size=square" alt="好友功能" style="width: 80px; height: 80px; margin-bottom: 15px;">
-                <h2 style="color: #333; margin-bottom: 10px;">好友功能</h2>
-            </div>
-            <p style="color: #666; margin-bottom: 20px;">添加好友、发送消息、实时聊天，增强用户之间的互动与交流。</p>
-            <div style="text-align: center;">
-                <a href="/accounts/users/" class="btn">好友列表</a>
-            </div>
-        </div>
-        
-        <!-- 管理后台 -->
-        <div class="card">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=admin%20panel%20icon%20with%20gray%20color&image_size=square" alt="管理后台" style="width: 80px; height: 80px; margin-bottom: 15px;">
-                <h2 style="color: #333; margin-bottom: 10px;">管理后台</h2>
-            </div>
-            <p style="color: #666; margin-bottom: 20px;">完整的后台管理功能，方便管理员进行内容管理和系统配置。</p>
-            <div style="text-align: center;">
-                <a href="/admin/" class="btn">进入后台</a>
-            </div>
-        </div>
-    </div>
-    
-    <div style="margin-top: 60px; text-align: center;">
-        <h2 style="color: #333; margin-bottom: 20px;">关于项目</h2>
-        <p style="color: #666; max-width: 800px; margin: 0 auto;">本项目基于Django框架开发，集成了多种功能模块，为用户提供全方位的Web应用体验。无论是个人使用还是企业部署，都能满足各种需求。</p>
-        <div style="margin-top: 30px;">
-            <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=modern%20web%20development%20concept%20with%20multiple%20devices&image_size=landscape_16_9" alt="Web开发" style="width: 100%; max-width: 800px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
-        </div>
+        </a>
     </div>
 
-    <!-- AI互动模块 -->
-    <div style="margin-top: 60px;">
-        <h2 style="color: #333; margin-bottom: 30px; text-align: center;">智能互动中心</h2>
-        <div style="max-width: 800px; margin: 0 auto;">
-            {% include 'ai_assistant/ai_interaction.html' %}
+    <!-- 双栏内容流 -->
+    <div class="dual-content">
+        <!-- 社区栏 -->
+        <div class="content-col">
+            <div class="col-header community">
+                <h3>最新文章</h3>
+                <a href="/blog/">浏览全部 &rarr;</a>
+            </div>
+            {% if recent_posts %}
+                {% for post in recent_posts %}
+                    <div class="content-item">
+                        <a href="{% url 'post_detail' post.slug %}">
+                            <div class="item-title">{{ post.title }}</div>
+                            <div class="item-meta">
+                                {{ post.author.username }} &middot; {{ post.publish_date|date:"m-d" }}
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 40px 0; text-align: center; color: var(--text-secondary); font-size: 13px;">
+                    还没有文章
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- 旅游栏 -->
+        <div class="content-col">
+            <div class="col-header travel">
+                <h3>热门旅行计划</h3>
+                <a href="/travel/trips/">浏览全部 &rarr;</a>
+            </div>
+            {% if recent_trips %}
+                {% for trip in recent_trips %}
+                    <div class="content-item trip-item">
+                        <a href="{% url 'trip_detail' trip.slug %}">
+                            <div class="item-title">{{ trip.title }}</div>
+                            <div class="item-stats">
+                                {% if trip.destination %}
+                                    <span>{{ trip.destination.name }}</span>
+                                {% endif %}
+                                <span>{{ trip.days_count }}天</span>
+                                <span>预算 ¥{{ trip.budget_total|floatformat:0 }}</span>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 40px 0; text-align: center; color: var(--text-secondary); font-size: 13px;">
+                    还没有公开的旅行计划
+                </div>
+            {% endif %}
+
+            <!-- 精选景点 -->
+            <div class="featured-destinations">
+                <div class="col-header travel" style="margin-top: 32px;">
+                    <h3>精选景点</h3>
+                    <a href="/travel/destinations/">更多景点 &rarr;</a>
+                </div>
+                <div class="dest-mini-grid">
+                    {% for dest in featured_destinations %}
+                        <a href="{% url 'destination_detail' dest.slug %}" class="dest-mini">
+                            <div class="dest-img">
+                                {% if dest.image %}
+                                    <img src="{{ dest.image.url }}" alt="{{ dest.name }}">
+                                {% else %}
+                                    <i class="fas fa-map-marker-alt"></i>
+                                {% endif %}
+                            </div>
+                            <div class="dest-info">
+                                <div class="dest-name">{{ dest.name }}</div>
+                                <div class="dest-loc">{{ dest.city }}, {{ dest.province }}</div>
+                            </div>
+                        </a>
+                    {% empty %}
+                        <div style="grid-column: 1/-1; padding: 20px; text-align: center; color: var(--text-secondary); font-size: 13px;">
+                            暂无精选景点
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
